@@ -138,9 +138,16 @@ export async function POST(request: Request) {
       connection: { id: saved.data.id, phoneNumber: phone.display_phone_number ?? null, verifiedName: phone.verified_name ?? null, status: "connected" }
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    // Never log tokens, OAuth codes, app secrets, or request bodies.
-    console.error(`[WhatsApp signup ${requestId}] failed at ${stage}: ${message}`);
+    // Supabase/PostgREST errors are plain objects, not always Error instances.
+    const detail = error && typeof error === "object"
+      ? error as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown }
+      : null;
+    const message = error instanceof Error
+      ? error.message
+      : typeof detail?.message === "string" ? detail.message : String(error ?? "Unknown error");
+    const code = typeof detail?.code === "string" ? detail.code : undefined;
+    // Log diagnostic fields only; never log tokens, OAuth codes, app secrets, or request bodies.
+    console.error(`[WhatsApp signup ${requestId}] failed at ${stage}: code=${code ?? "none"} message=${message}`);
     return NextResponse.json({ error: "WhatsApp connection failed.", requestId, stage }, { status: 502 });
   }
 }
