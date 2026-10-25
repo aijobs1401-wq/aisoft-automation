@@ -122,22 +122,15 @@ export async function POST(request: Request) {
       display_phone_number: phone.display_phone_number ?? null,
       verified_name: phone.verified_name ?? null,
       connection_status: "connected",
+      token_ciphertext: encryptWhatsAppToken(accessToken),
+      token_key_version: 1,
       updated_at: new Date().toISOString()
     };
     const saved = existing
       ? await admin.from("whatsapp_connections").update(connectionValues).eq("id", existing.id).select("id").single()
-      : await admin.from("whatsapp_connections").insert(connectionValues).select("id").single();
+      : await admin.from("whatsapp_connections").insert({ ...connectionValues, created_at: new Date().toISOString() }).select("id").single();
     if (saved.error || !saved.data) throw saved.error || new Error("Could not save WhatsApp connection.");
 
-    stage = "save_encrypted_access_token";
-    const { error: secretError } = await admin.from("whatsapp_connection_secrets").upsert({
-      connection_id: saved.data.id,
-      token_ciphertext: encryptWhatsAppToken(accessToken),
-      token_key_version: 1,
-      token_expires_at: tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "connection_id" });
-    if (secretError) throw secretError;
 
     console.info(`[WhatsApp signup ${requestId}] completed successfully`);
     return NextResponse.json({
