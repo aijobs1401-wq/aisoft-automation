@@ -15,6 +15,10 @@ Set these values on the `aisoft-automation` Render web service. Never prefix ser
 - `META_GRAPH_API_VERSION`: Graph API version, currently set to `v23.0`
 - `APP_BASE_URL`: `https://aisoft-automation.onrender.com`
 
+## Supabase Auth setup
+
+In Supabase Dashboard → Authentication → URL Configuration, set the Site URL to `https://aisoft-automation.onrender.com` and add `https://aisoft-automation.onrender.com/auth/callback` to the allowed Redirect URLs. Add your local development callback separately if needed.
+
 ## Meta app setup
 
 1. In Meta for Developers, create/select the Business app and add WhatsApp.
