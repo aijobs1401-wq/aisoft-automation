@@ -1,0 +1,123 @@
+import { NextResponse } from "next/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
+import { encryptWhatsAppToken } from "@/lib/whatsapp/token-crypto";
+
+export const runtime = "nodejs";
+
+type GraphError = { error?: { message?: string; type?: string; code?: number } };
+
+async function graphGet(path: string, accessToken: string) {
+  const version = process.env.META_GRAPH_API_VERSION || "v23.0";
+  const url = new URL(`https://graph.facebook.com/${version}/${path.replace(/^\/+/, "")}`);
+  url.searchParams.set("access_token", accessToken);
+  const response = await fetch(url, { cache: "no-store" });
+  const data = await response.json() as GraphError & Record<string, unknown>;
+  if (!response.ok) throw new Error(data.error?.message || "Meta Graph API request failed.");
+  return data;
+}
+
+async function graphPost(path: string, accessToken: string) {
+  const version = process.env.META_GRAPH_API_VERSION || "v23.0";
+  const url = `https://graph.facebook.com/${version}/${path.replace(/^\/+/, "")}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ access_token: accessToken }),
+    cache: "no-store"
+  });
+  const data = await response.json() as GraphError & Record<string, unknown>;
+  if (!response.ok || data.success === false) throw new Error(data.error?.message || "Unable to subscribe the WhatsApp account.");
+  return data;
+}
+
+export async function POST(request: Request) {
+  const appId = process.env.META_APP_ID;
+  const appSecret = process.env.META_APP_SECRET;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!appId || !appSecret || !serviceKey || !supabaseUrl || !process.env.WHATSAPP_TOKEN_ENCRYPTION_KEY) {
+    return NextResponse.json({ error: "WhatsApp integration is not fully configured. Admin setup is required." }, { status: 503 });
+  }
+
+  const supabase = await createClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
+
+  let body: { code?: string; wabaId?: string; phoneNumberId?: string; organizationId?: string };
+  try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
+  const { code, wabaId, phoneNumberId, organizationId } = body;
+  if (!code || !wabaId || !phoneNumberId || !organizationId ||
+      !/^[0-9]{5,40}$/.test(wabaId) || !/^[0-9]{5,40}$/.test(phoneNumberId)) {
+    return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA and phone number ID." }, { status: 400 });
+  }
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("organization_members").select("organization_id,role")
+    .eq("user_id", user.id).eq("organization_id", organizationId).maybeSingle();
+  if (membershipError || !membership) return NextResponse.json({ error: "You do not have access to this workspace." }, { status: 403 });
+
+  try {
+    const graphVersion = process.env.META_GRAPH_API_VERSION || "v23.0";
+    const exchangeUrl = new URL(`https://graph.facebook.com/${graphVersion}/oauth/access_token`);
+    exchangeUrl.searchParams.set("client_id", appId);
+    exchangeUrl.searchParams.set("client_secret", appSecret);
+    exchangeUrl.searchParams.set("code", code);
+    const exchangeResponse = await fetch(exchangeUrl, { cache: "no-store" });
+    const tokenData = await exchangeResponse.json() as { access_token?: string; expires_in?: number; error?: { message?: string } };
+    if (!exchangeResponse.ok || !tokenData.access_token) {
+      return NextResponse.json({ error: tokenData.error?.message || "Meta authorization-code exchange failed." }, { status: 502 });
+    }
+
+    const accessToken = tokenData.access_token;
+    const phone = await graphGet(phoneNumberId, accessToken) as {
+      display_phone_number?: string; verified_name?: string; id?: string;
+    };
+    if (phone.id && phone.id !== phoneNumberId) {
+      return NextResponse.json({ error: "Meta returned a different phone number ID." }, { status: 502 });
+    }
+    await graphPost(`${wabaId}/subscribed_apps`, accessToken);
+
+    const admin = createSupabaseClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+    const { data: existing, error: existingError } = await admin
+      .from("whatsapp_connections").select("id,organization_id")
+      .eq("phone_number_id", phoneNumberId).maybeSingle();
+    if (existingError) throw existingError;
+    if (existing && existing.organization_id !== organizationId) {
+      return NextResponse.json({ error: "This WhatsApp number is already linked to another workspace. Contact platform support." }, { status: 409 });
+    }
+
+    const connectionValues = {
+      organization_id: organizationId,
+      phone_number_id: phoneNumberId,
+      waba_id: wabaId,
+      display_phone_number: phone.display_phone_number ?? null,
+      verified_name: phone.verified_name ?? null,
+      connection_status: "connected",
+      updated_at: new Date().toISOString()
+    };
+    const saved = existing
+      ? await admin.from("whatsapp_connections").update(connectionValues).eq("id", existing.id).select("id").single()
+      : await admin.from("whatsapp_connections").insert(connectionValues).select("id").single();
+    if (saved.error || !saved.data) throw saved.error || new Error("Could not save WhatsApp connection.");
+
+    const { error: secretError } = await admin.schema("private").from("whatsapp_connection_secrets").upsert({
+      connection_id: saved.data.id,
+      token_ciphertext: encryptWhatsAppToken(accessToken),
+      token_key_version: 1,
+      token_expires_at: tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "connection_id" });
+    if (secretError) throw secretError;
+
+    return NextResponse.json({
+      ok: true,
+      connection: { id: saved.data.id, phoneNumber: phone.display_phone_number ?? null, verifiedName: phone.verified_name ?? null, status: "connected" }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "WhatsApp connection failed.";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
+}
