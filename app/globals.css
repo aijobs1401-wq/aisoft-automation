@@ -230,3 +230,69 @@
 .app-footer>a{color:#8ca4c0}
 @media(max-width:1050px){.app-shell{grid-template-columns:220px minmax(0,1fr)}.app-sidebar{padding-left:11px;padding-right:11px}.app-content{padding-left:24px;padding-right:24px}.workspace-cards{grid-template-columns:1fr}.workspace-card{min-height:0}.workspace-card p{min-height:0}.greeting-orb{flex-basis:100px;height:100px;margin-right:0}.orb-core{width:55px;height:55px;border-radius:18px}}
 @media(max-width:720px){.app-shell{display:block}.app-sidebar{position:relative;top:auto;height:auto;padding:14px 16px 10px;border-right:0;border-bottom:1px solid var(--app-line)}.app-brand{padding:0 0 14px}.app-brand-mark{width:34px;height:34px}.app-brand strong{font-size:10px}.sidebar-label,.sidebar-help,.sidebar-account{display:none}.app-side-nav{display:flex;overflow-x:auto;gap:5px;padding-bottom:2px}.app-side-link{min-height:36px;flex:0 0 auto;padding:0 10px;font-size:10px;gap:7px}.app-side-link svg{width:14px;height:14px}.app-side-link .coming-pill{display:none}.app-topbar{height:53px;padding:0 16px}.breadcrumb{font-size:10px}.secure-label{font-size:0;gap:0}.secure-label svg{width:17px;height:17px}.topbar-right{gap:10px}.topbar-avatar{width:27px;height:27px;flex-basis:27px}.app-content{padding:19px 15px 20px}.dashboard-greeting{padding:23px 20px;min-height:0;border-radius:15px}.dashboard-greeting h1{font-size:29px;max-width:400px}.dashboard-greeting p{font-size:11px;max-width:420px}.greeting-orb{display:none}.workspace-banner{margin:12px 0 25px;padding:12px;gap:10px;flex-wrap:wrap}.workspace-symbol{width:36px;height:36px;flex-basis:36px}.workspace-details strong{font-size:12px}.workspace-status{font-size:8px;padding:6px 8px}.section-title-row h2,.setup-panel-head h2{font-size:16px}.section-title-row p,.setup-panel-head p{font-size:10px}.subtle-link{font-size:9px}.workspace-cards{gap:10px}.workspace-card{padding:17px}.workspace-card h3{margin:13px 0 7px;font-size:14px}.workspace-card p{font-size:10px;margin-bottom:14px}.setup-panel{margin-top:22px;padding:18px 14px}.setup-panel-head{align-items:flex-start}.checklist-badge{font-size:0;padding:7px}.checklist-badge svg{width:16px;height:16px}.checklist-item{grid-template-columns:20px 30px minmax(0,1fr);gap:8px;padding:14px 0}.checklist-icon{width:29px;height:29px}.checklist-item strong{font-size:10px}.checklist-item small{font-size:9px}.step-state,.step-link{grid-column:3;justify-self:start;margin-top:-2px}.app-footer{flex-wrap:wrap;line-height:1.6}.app-footer>span:nth-child(2){order:3;width:100%}}
+
+
+/* CINEMATIC ORANGE EDITION — AI SOFT STUDIO */
+:root{--blue:#ff7a18;--cyan:#ffc06b;--bg:#090807;--panel:#17110d;--line:#473020}
+body{background:radial-gradient(ellipse at 78% 0%,#71300f66 0,transparent 38%),radial-gradient(ellipse at 4% 55%,#ff7a1812 0,transparent 35%),#090807}
+.btn,.marketing-cta{background:linear-gradient(115deg,#ff6a00 0%,#ff8f1f 52%,#ffc06b 100%);border-color:#ff9b4a66;box-shadow:0 10px 30px #ff6a002b,inset 0 1px #ffffff50}
+.btn:hover,.marketing-cta:hover{box-shadow:0 14px 38px #ff6a0044,inset 0 1px #ffffff55}
+.logo,.account-avatar,.topbar-avatar{background:linear-gradient(135deg,#ff6a00,#ffc06b);color:#1a0d05}
+.eyebrow{border-color:#ff8a3d55;color:#ffc08a;background:#ff7a1814}
+.gradient,.marketing-copy h1 span{background:linear-gradient(100deg,#fff7ee 0%,#ffbd72 43%,#ff6a00 88%);background-clip:text;-webkit-background-clip:text;color:transparent}
+.preview{border-color:#ff9a4a35;background:linear-gradient(150deg,#2b1a10ed,#100c09f7);box-shadow:0 28px 100px #000b,0 0 65px #ff6a0010}
+.bar,.mock-chart span{background:linear-gradient(180deg,#ffd08a,#ff6a00)}
+.marketing{--m-bg:#090807;--m-panel:#17110d;--m-line:rgba(255,173,105,.17);--m-muted:#b8a18e;background:radial-gradient(ellipse at 78% 4%,rgba(255,106,0,.18),transparent 36%),radial-gradient(ellipse at 5% 45%,rgba(255,190,100,.07),transparent 30%),#090807}
+.marketing-logo{border-color:#ff9a4a66;color:#ffd09a;background:linear-gradient(145deg,#ff741f35,#ffbd5b12);box-shadow:inset 0 1px #ffffff18,0 8px 28px #ff6a0015}
+.marketing-links a:hover,.marketing-footer a:hover{color:#ffb36c}
+.marketing-kicker{border-color:#ff9b4a3d;background:#29170db0;color:#ffd0a4}
+.marketing-watch svg,.marketing-trust svg{color:#ffad58}
+.stage-glow{background:radial-gradient(ellipse,#ff6a0030,transparent 68%)}
+.product-window{background:linear-gradient(145deg,#21160ff7,#100d0bf9);box-shadow:0 32px 100px #000a,0 0 0 7px #ffffff04,0 0 65px #ff6a000b}
+.mini-logo{color:#ffd09a;background:#ff7a1822;border-color:#ff9d4a45}
+.preview-label{color:#ffc08a;border-color:#ff8c3b55}
+.mock-sidebar .mock-side-active{background:#ff7a1824;color:#ffcf9f}
+.floating-icon,.setup-icon{color:#ffd09a;background:#ff7a1822;border-color:#ff9d4a44}
+.marketing-feature-icon{color:#ffc184!important;background:#ff7a1818!important;border-color:#ff9b4a2e!important}
+.marketing-eyebrow{color:#ffb36c!important}
+.marketing-proof,.marketing-feature,.workflow-step,.marketing-bottom-cta{border-color:#ffb36c1b}
+.marketing-bottom-cta{background:radial-gradient(ellipse at 0% 50%,#ff6a001b,transparent 45%),linear-gradient(110deg,#21150e,#100d0b)}
+.bottom-cta-mark{color:#ffd09a;background:#ff7a1822;border-color:#ff9b4a44}
+.live-dot{background:#ff9c42;box-shadow:0 0 14px #ff7a1888}
+.app-shell{--app-line:rgba(255,173,105,.15);background:radial-gradient(ellipse at 80% 0%,#6b2b0e30,transparent 38%),#090807}
+.app-sidebar{background:#0d0b09}
+.app-brand-mark,.workspace-symbol,.blue-icon,.cyan-icon,.purple-icon{color:#ffc184;background:linear-gradient(145deg,#ff7a1828,#ffbd6b0d);border-color:#ff9b4a30}
+.app-side-link.active{background:#ff7a181b;color:#ffd0a4;border-color:#ff9b4a2b}
+.app-side-link.active:before{background:#ff8a2b}
+.dashboard-greeting{border-color:#ff9b4a28;background:radial-gradient(ellipse at 83% 30%,#ff7a182b,transparent 35%),radial-gradient(ellipse at 0% 100%,#ffbd6b10,transparent 43%),linear-gradient(115deg,#28180f,#100d0b 72%)}
+.dashboard-eyebrow,.eyebrow-spark,.subtle-link,.step-link,.app-footer>a{color:#ffb36c}
+.dashboard-greeting h1 span{background:linear-gradient(95deg,#fff0dd,#ffbf79);background-clip:text;-webkit-background-clip:text;color:transparent}
+.orb-ring{border-color:#ff9b4a35}.ring-two{border-color:#ffc06b24}
+.orb-core{color:#ffd09a;background:linear-gradient(145deg,#ff8a2b4a,#ffc06b1b);border-color:#ffb36c55;box-shadow:0 0 42px #ff7a1829,inset 0 1px #ffffff20}
+.workspace-card:hover{border-color:#ff9b4a55;box-shadow:0 14px 35px #0004,0 0 25px #ff7a180a}
+.whatsapp-card{background:radial-gradient(ellipse at 100% 0%,#ff7a1816,transparent 50%),linear-gradient(150deg,#21170f,#100d0b);border-color:#ff9b4a2b}
+.card-action.primary-action{color:#ffc184}
+.checklist-icon{color:#ffc184}
+.auth-card{background:linear-gradient(150deg,#21170f,#100d0b);border-color:#473020}
+.auth-form input:focus{border-color:#ff8a2b;box-shadow:0 0 0 3px #ff7a1820}
+.auth-bottom a{color:#ffbd83}
+.form-message{color:#ffd0a4;background:#ff7a1810;border-color:#ff7a1833}
+.marketing-nav,.marketing-copy,.product-stage,.marketing-proof,.marketing-section,.workflow-section,.marketing-bottom-cta,.marketing-footer,.marketing-disclaimer{animation:cinema-rise .85s cubic-bezier(.2,.75,.25,1) both}
+.product-stage{animation-delay:.12s}
+.marketing-proof{animation-delay:.18s}
+.marketing-section{animation-delay:.24s}
+.workflow-section{animation-delay:.3s}
+.marketing-bottom-cta{animation-delay:.36s}
+.product-window{animation:cinema-float 8s ease-in-out infinite;transform-origin:center}
+.stage-glow{animation:orange-pulse 5s ease-in-out infinite}
+.marketing-logo,.app-brand-mark{transition:transform .3s ease,box-shadow .3s ease}
+.marketing-brand:hover .marketing-logo,.app-brand:hover .app-brand-mark{transform:rotate(-8deg) scale(1.06);box-shadow:0 0 25px #ff7a1835}
+.marketing-feature,.workflow-step,.workspace-card,.dash-tile,.feature{transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease}
+.marketing-feature:hover,.workflow-step:hover,.feature:hover{transform:translateY(-5px);border-color:#ff9b4a50;box-shadow:0 18px 45px #0004}
+.marketing-cta svg,.card-action svg,.step-link svg{transition:transform .25s ease}
+.marketing-cta:hover svg,.card-action:hover svg,.step-link:hover svg{transform:translate(3px,-2px)}
+@keyframes cinema-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cinema-float{0%,100%{transform:perspective(1200px) rotateY(-3deg) rotateX(1deg) translateY(0)}50%{transform:perspective(1200px) rotateY(-1deg) rotateX(0deg) translateY(-8px)}}
+@keyframes orange-pulse{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.045)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+@media(max-width:720px){.product-window{animation:none;transform:none}}
