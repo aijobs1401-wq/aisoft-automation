@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 export default function SendMessageForm({
   organizationId,
@@ -16,7 +16,7 @@ export default function SendMessageForm({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  async function send(event: React.FormEvent<HTMLFormElement>) {
+  async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
