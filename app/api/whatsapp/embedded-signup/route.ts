@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       : await admin.from("whatsapp_connections").insert(connectionValues).select("id").single();
     if (saved.error || !saved.data) throw saved.error || new Error("Could not save WhatsApp connection.");
 
-    const { error: secretError } = await admin.schema("private").from("whatsapp_connection_secrets").upsert({
+    const { error: secretError } = await admin.from("whatsapp_connection_secrets").upsert({
       connection_id: saved.data.id,
       token_ciphertext: encryptWhatsAppToken(accessToken),
       token_key_version: 1,
