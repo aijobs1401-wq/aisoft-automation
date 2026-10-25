@@ -64,7 +64,7 @@ export default function WhatsAppConnectButton({
         try { data = JSON.parse(data); } catch { return; }
       }
       if (data?.type !== "WA_EMBEDDED_SIGNUP" && data?.event !== "WA_EMBEDDED_SIGNUP") return;
-      const eventName = data?.event ?? data?.data?.event;
+      const eventName = data?.data?.event ?? data?.eventName ?? (data?.event !== "WA_EMBEDDED_SIGNUP" ? data?.event : undefined);
       const details = data?.data ?? {};
       if (eventName === "FINISH") {
         const wabaId = String(details.waba_id ?? details.wabaId ?? "");
