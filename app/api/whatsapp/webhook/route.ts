@@ -131,7 +131,11 @@ export async function POST(request: Request) {
           // Generate one automatic reply only for a newly inserted, text-bearing inbound message.
           // AI failures must not cause Meta webhook retries or block inbox persistence.
           const inboundText = textBody(message);
-          if (!isAppEcho && insertedMessages?.length && inboundText && !contact.opted_out_at && process.env.OPENAI_API_KEY) {
+          const optOutRequested = !isAppEcho && Boolean(inboundText && /^(stop|stopall|unsubscribe|cancel|quit|end|remove)$/i.test(inboundText.trim()));
+          if (optOutRequested) {
+            await admin.from("contacts").update({ opted_out_at: new Date().toISOString() }).eq("id", contact.id);
+          }
+          if (!isAppEcho && insertedMessages?.length && inboundText && !optOutRequested && !contact.opted_out_at && process.env.OPENAI_API_KEY) {
             try {
               const { data: aiSettings } = await admin.from("whatsapp_ai_settings")
                 .select("enabled,bot_name,system_prompt")
