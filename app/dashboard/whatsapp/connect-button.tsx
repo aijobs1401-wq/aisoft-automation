@@ -66,11 +66,11 @@ export default function WhatsAppConnectButton({
       if (data?.type !== "WA_EMBEDDED_SIGNUP" && data?.event !== "WA_EMBEDDED_SIGNUP") return;
       const eventName = data?.data?.event ?? data?.eventName ?? (data?.event !== "WA_EMBEDDED_SIGNUP" ? data?.event : undefined);
       const details = data?.data ?? {};
-      if (eventName === "FINISH") {
+      if (eventName === "FINISH" || eventName === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
         const wabaId = String(details.waba_id ?? details.wabaId ?? "");
         const phoneNumberId = String(details.phone_number_id ?? details.phoneNumberId ?? "");
-        if (wabaId && phoneNumberId) setSessionInfo({ wabaId, phoneNumberId });
-        else setError("Meta signup finished, but no WhatsApp phone number was returned. Check the Embedded Signup configuration and try again.");
+        if (wabaId) setSessionInfo({ wabaId, phoneNumberId });
+        else setError("Meta signup finished, but no WhatsApp Business Account ID was returned. Check the Embedded Signup configuration and try again.");
       } else if (eventName === "CANCEL") {
         setError("WhatsApp setup was cancelled. You can try again.");
       } else if (eventName === "ERROR") {
@@ -131,7 +131,7 @@ export default function WhatsAppConnectButton({
       config_id: configId,
       response_type: "code",
       override_default_response_type: true,
-      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding" }
+      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" }
     });
   }
 
