@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   try {
     for (const entry of payload?.entry ?? []) {
       for (const change of entry?.changes ?? []) {
-        if (change?.field !== "messages") continue;
+        if (change?.field !== "messages" && change?.field !== "smb_message_echoes") continue;
         const value = change?.value ?? {};
         const phoneNumberId = String(value?.metadata?.phone_number_id ?? "");
         if (!phoneNumberId) continue;
@@ -83,8 +83,11 @@ export async function POST(request: Request) {
         if (connectionError) throw connectionError;
         if (!connection) continue;
 
-        for (const message of value.messages ?? []) {
-          const waId = String(message?.from ?? "");
+        const isAppEcho = change.field === "smb_message_echoes";
+        const eventMessages = value.messages ?? value.smb_message_echoes ?? [];
+        for (const message of eventMessages) {
+          // Coexistence app echoes are outbound messages sent manually from the Business App.
+          const waId = String(isAppEcho ? (message?.to ?? message?.recipient_id ?? "") : (message?.from ?? ""));
           if (!waId || !message?.id) continue;
           const profile = (value.contacts ?? []).find((contact: any) => String(contact?.wa_id ?? "") === waId);
           const { data: contact, error: contactError } = await admin
@@ -116,16 +119,16 @@ export async function POST(request: Request) {
             organization_id: connection.organization_id,
             conversation_id: conversation.id,
             meta_message_id: String(message.id),
-            direction: "inbound",
+            direction: isAppEcho ? "outbound" : "inbound",
             message_type: String(message.type ?? "unknown"),
             body: textBody(message),
-            delivery_status: "received",
+            delivery_status: isAppEcho ? "sent" : "received",
             occurred_at: occurredAt
           }, { onConflict: "meta_message_id", ignoreDuplicates: true });
           if (messageError) throw messageError;
         }
 
-        for (const status of value.statuses ?? []) {
+        for (const status of (isAppEcho ? [] : (value.statuses ?? []))) {
           const mapped = ["sent", "delivered", "read", "failed"].includes(status?.status) ? status.status : null;
           if (!mapped || !status?.id) continue;
           const errorCode = status?.errors?.[0]?.code != null ? String(status.errors[0].code) : null;
