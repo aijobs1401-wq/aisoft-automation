@@ -32,6 +32,10 @@ async function graphPost(path: string, accessToken: string) {
 }
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
+  let stage = "request_received";
+  console.info(`[WhatsApp signup ${requestId}] POST received`);
+  stage = "check_environment";
   const appId = process.env.META_APP_ID;
   const appSecret = process.env.META_APP_SECRET;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -40,6 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "WhatsApp integration is not fully configured. Admin setup is required." }, { status: 503 });
   }
 
+  stage = "authenticate_user";
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
@@ -52,12 +57,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA ID." }, { status: 400 });
   }
 
+  stage = "check_workspace_membership";
   const { data: membership, error: membershipError } = await supabase
     .from("organization_members").select("organization_id,role")
     .eq("user_id", user.id).eq("organization_id", organizationId).maybeSingle();
   if (membershipError || !membership) return NextResponse.json({ error: "You do not have access to this workspace." }, { status: 403 });
 
   try {
+    stage = "exchange_meta_authorization_code";
     const graphVersion = process.env.META_GRAPH_API_VERSION || "v23.0";
     const exchangeUrl = new URL(`https://graph.facebook.com/${graphVersion}/oauth/access_token`);
     exchangeUrl.searchParams.set("client_id", appId);
@@ -70,6 +77,7 @@ export async function POST(request: Request) {
     }
 
     const accessToken = tokenData.access_token;
+    stage = "fetch_whatsapp_phone_details";
     let selectedPhoneNumberId = phoneNumberId;
     let phone: { display_phone_number?: string; verified_name?: string; id?: string };
     if (selectedPhoneNumberId) {
@@ -90,11 +98,14 @@ export async function POST(request: Request) {
     if (!selectedPhoneNumberId || (phone.id && phone.id !== selectedPhoneNumberId)) {
       return NextResponse.json({ error: "Meta returned an invalid phone number ID." }, { status: 502 });
     }
+    stage = "subscribe_app_to_waba";
     await graphPost(`${wabaId}/subscribed_apps`, accessToken);
 
+    stage = "initialize_supabase_admin";
     const admin = createSupabaseClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
+    stage = "check_existing_connection";
     const { data: existing, error: existingError } = await admin
       .from("whatsapp_connections").select("id,organization_id")
       .eq("phone_number_id", selectedPhoneNumberId).maybeSingle();
@@ -103,6 +114,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This WhatsApp number is already linked to another workspace. Contact platform support." }, { status: 409 });
     }
 
+    stage = "save_whatsapp_connection";
     const connectionValues = {
       organization_id: organizationId,
       phone_number_id: selectedPhoneNumberId,
@@ -117,6 +129,7 @@ export async function POST(request: Request) {
       : await admin.from("whatsapp_connections").insert(connectionValues).select("id").single();
     if (saved.error || !saved.data) throw saved.error || new Error("Could not save WhatsApp connection.");
 
+    stage = "save_encrypted_access_token";
     const { error: secretError } = await admin.from("whatsapp_connection_secrets").upsert({
       connection_id: saved.data.id,
       token_ciphertext: encryptWhatsAppToken(accessToken),
@@ -126,12 +139,15 @@ export async function POST(request: Request) {
     }, { onConflict: "connection_id" });
     if (secretError) throw secretError;
 
+    console.info(`[WhatsApp signup ${requestId}] completed successfully`);
     return NextResponse.json({
       ok: true,
       connection: { id: saved.data.id, phoneNumber: phone.display_phone_number ?? null, verifiedName: phone.verified_name ?? null, status: "connected" }
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "WhatsApp connection failed.";
-    return NextResponse.json({ error: message }, { status: 502 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    // Never log tokens, OAuth codes, app secrets, or request bodies.
+    console.error(`[WhatsApp signup ${requestId}] failed at ${stage}: ${message}`);
+    return NextResponse.json({ error: "WhatsApp connection failed.", requestId, stage }, { status: 502 });
   }
 }
