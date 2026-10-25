@@ -12,7 +12,7 @@ export default async function AutomationPage() {
     .select("organization_id,organizations(name)").eq("user_id", user.id)
     .order("created_at", { ascending: true }).limit(1);
   const membership = memberships?.[0];
-  if (!membership) return <main className="dashboard-wrap"><Link href="/dashboard">← Back to dashboard</Link><h1>Workspace required</h1><p>Create your workspace before configuring AI.</p></main>;
+  if (!membership) return <main className="dashboard-wrap"><header className="dash-nav"><Link className="brand" href="/"><span className="logo">AI</span><span>AI SOFT STUDIO</span></Link><div className="dash-user"><Link href="/dashboard">Back to dashboard</Link></div></header><section className="dash-welcome"><span className="eyebrow">ONE QUICK STEP</span><h1>Create your workspace first</h1><p className="sub">Your account is signed in, but it does not have a workspace yet. Create one to save AI chatbot settings and connect WhatsApp.</p><Link className="btn auth-submit" href="/dashboard/workspace/new">Create workspace & continue →</Link></section></main>;
   const organization = membership.organizations as { name?: string } | null;
   return (
     <main className="dashboard-wrap">
