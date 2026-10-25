@@ -129,9 +129,10 @@ export default function WhatsAppConnectButton({
       else if (response?.status !== "connected") setError("Meta login did not return an authorization code. Check app mode, allowed domains, and test-user access.");
     }, {
       config_id: configId,
+      auth_type: "rerequest",
       response_type: "code",
       override_default_response_type: true,
-      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" }
+      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding" }
     });
   }
 
