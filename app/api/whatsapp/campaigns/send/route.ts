@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const templateName = String(body.templateName ?? "").trim();
   const language = String(body.language ?? "en").trim();
   const rawPhones = Array.isArray(body.phones) ? body.phones : [];
-  const phones = [...new Set(rawPhones.map((value) => String(value).replace(/[\\s()+.-]/g, "")).filter((value) => /^\\d{8,15}$/.test(value)))];
+  const phones = [...new Set(rawPhones.map((value) => String(value).replace(/[\s()+.-]/g, "")).filter((value) => /^\d{8,15}$/.test(value)))];
 
   if (!organizationId || !connectionId || !campaignName || !/^[a-z0-9_]{2,128}$/.test(templateName) ||
       !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(language) || !body.confirmedOptIn ||
