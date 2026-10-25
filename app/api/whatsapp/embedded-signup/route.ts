@@ -47,9 +47,9 @@ export async function POST(request: Request) {
   let body: { code?: string; wabaId?: string; phoneNumberId?: string; organizationId?: string };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
   const { code, wabaId, phoneNumberId, organizationId } = body;
-  if (!code || !wabaId || !phoneNumberId || !organizationId ||
-      !/^[0-9]{5,40}$/.test(wabaId) || !/^[0-9]{5,40}$/.test(phoneNumberId)) {
-    return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA and phone number ID." }, { status: 400 });
+  if (!code || !wabaId || !organizationId ||
+      !/^[0-9]{5,40}$/.test(wabaId) || (phoneNumberId && !/^[0-9]{5,40}$/.test(phoneNumberId))) {
+    return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA ID." }, { status: 400 });
   }
 
   const { data: membership, error: membershipError } = await supabase
@@ -70,11 +70,25 @@ export async function POST(request: Request) {
     }
 
     const accessToken = tokenData.access_token;
-    const phone = await graphGet(phoneNumberId, accessToken) as {
-      display_phone_number?: string; verified_name?: string; id?: string;
-    };
-    if (phone.id && phone.id !== phoneNumberId) {
-      return NextResponse.json({ error: "Meta returned a different phone number ID." }, { status: 502 });
+    let selectedPhoneNumberId = phoneNumberId;
+    let phone: { display_phone_number?: string; verified_name?: string; id?: string };
+    if (selectedPhoneNumberId) {
+      phone = await graphGet(selectedPhoneNumberId, accessToken) as { display_phone_number?: string; verified_name?: string; id?: string };
+    } else {
+      const phoneList = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, accessToken) as {
+        data?: Array<{ id?: string; display_phone_number?: string; verified_name?: string }>;
+      };
+      if (!phoneList.data?.length) {
+        return NextResponse.json({ error: "Meta finished onboarding but no phone number is available yet. Complete phone verification in Meta and retry signup." }, { status: 409 });
+      }
+      if (phoneList.data.length !== 1 || !phoneList.data[0].id) {
+        return NextResponse.json({ error: "Meta returned multiple phone numbers. Please restart signup and select the intended number." }, { status: 409 });
+      }
+      phone = phoneList.data[0];
+      selectedPhoneNumberId = phone.id;
+    }
+    if (!selectedPhoneNumberId || (phone.id && phone.id !== selectedPhoneNumberId)) {
+      return NextResponse.json({ error: "Meta returned an invalid phone number ID." }, { status: 502 });
     }
     await graphPost(`${wabaId}/subscribed_apps`, accessToken);
 
@@ -83,7 +97,7 @@ export async function POST(request: Request) {
     });
     const { data: existing, error: existingError } = await admin
       .from("whatsapp_connections").select("id,organization_id")
-      .eq("phone_number_id", phoneNumberId).maybeSingle();
+      .eq("phone_number_id", selectedPhoneNumberId).maybeSingle();
     if (existingError) throw existingError;
     if (existing && existing.organization_id !== organizationId) {
       return NextResponse.json({ error: "This WhatsApp number is already linked to another workspace. Contact platform support." }, { status: 409 });
@@ -91,7 +105,7 @@ export async function POST(request: Request) {
 
     const connectionValues = {
       organization_id: organizationId,
-      phone_number_id: phoneNumberId,
+      phone_number_id: selectedPhoneNumberId,
       waba_id: wabaId,
       display_phone_number: phone.display_phone_number ?? null,
       verified_name: phone.verified_name ?? null,
