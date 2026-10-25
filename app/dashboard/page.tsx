@@ -32,7 +32,7 @@ export default async function DashboardPage() {
         <article className="dash-tile">
           <span className="tile-icon">☷</span><h2>Conversations</h2>
           <p className="sub">Incoming messages and delivery events will appear after a WhatsApp account is connected and webhooks are configured.</p>
-          <span className="status-pill">Setup pending</span>
+          <Link className="btn" href="/dashboard/conversations">Open inbox</Link>
         </article>
         <article className="dash-tile">
           <span className="tile-icon">⌘</span><h2>Automation</h2>
