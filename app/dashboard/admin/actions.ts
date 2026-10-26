@@ -29,7 +29,7 @@ export async function updateWorkspaceStatus(formData: FormData) {
   if (!["pending", "active", "suspended"].includes(status)) throw new Error("Invalid workspace status.");
   const { error } = await admin.from("organizations").update({ status }).eq("id", id);
   if (error) throw new Error(`Workspace update failed: ${error.message}`);
-  revalidatePath("/admin");
+  revalidatePath("/dashboard/admin");
 }
 
 export async function updateWorkspaceBot(formData: FormData) {
@@ -43,7 +43,7 @@ export async function updateWorkspaceBot(formData: FormData) {
     ? await admin.from("whatsapp_ai_settings").update({ enabled, bot_name: botName, updated_at: new Date().toISOString() }).eq("organization_id", organizationId)
     : await admin.from("whatsapp_ai_settings").insert({ organization_id: organizationId, enabled, bot_name: botName });
   if (result.error) throw new Error(`AI bot update failed: ${result.error.message}`);
-  revalidatePath("/admin");
+  revalidatePath("/dashboard/admin");
 }
 
 export async function createClientWorkspace(formData: FormData) {
@@ -64,7 +64,7 @@ export async function createClientWorkspace(formData: FormData) {
     await admin.from("organizations").delete().eq("id", org.id);
     throw new Error(`Workspace created but owner assignment failed; rollback attempted: ${memberError.message}`);
   }
-  revalidatePath("/admin");
+  revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/users");
 }
 
@@ -80,5 +80,5 @@ export async function addWorkspaceMember(formData: FormData) {
   if (!member) throw new Error("No registered account found for that email. Ask the user to sign up first.");
   const { error } = await admin.from("organization_members").upsert({ organization_id: organizationId, user_id: member.id, role }, { onConflict: "organization_id,user_id" });
   if (error) throw new Error(`Could not assign workspace member: ${error.message}`);
-  revalidatePath("/admin");
+  revalidatePath("/dashboard/admin");
 }
