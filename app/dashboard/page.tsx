@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import SignOutButton from "./sign-out-button";
 import {
   ArrowUpRight, Bot, CheckCircle2, ChevronRight, CircleHelp, Command, Send,
-  MessageCircle, Plus, Settings2, ShieldCheck, Sparkles, Users, Zap
+  MessageCircle, Plus, Settings2, ShieldCheck, Sparkles, Users, Webhook, Zap
 } from "lucide-react";
 
 type Membership = { role: string; organizations: { name: string; status: string; slug: string } | null };
