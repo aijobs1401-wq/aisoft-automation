@@ -68,6 +68,20 @@ export async function POST(request: Request) {
   }, { onConflict: "event_key", ignoreDuplicates: true });
   if (eventError) return NextResponse.json({ error: "Could not persist webhook event." }, { status: 500 });
 
+  // Meta can retry the exact same delivery. A completed event is acknowledged
+  // without repeating work; failed events remain eligible for retry.
+  const { data: storedEvent, error: storedEventError } = await admin
+    .from("webhook_events")
+    .select("processing_status")
+    .eq("event_key", eventKey)
+    .maybeSingle();
+  if (storedEventError || !storedEvent) {
+    return NextResponse.json({ error: "Could not inspect webhook event state." }, { status: 500 });
+  }
+  if (storedEvent.processing_status === "processed") {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     for (const entry of payload?.entry ?? []) {
       for (const change of entry?.changes ?? []) {
@@ -78,11 +92,19 @@ export async function POST(request: Request) {
 
         const { data: connection, error: connectionError } = await admin
           .from("whatsapp_connections")
-          .select("id,organization_id")
+          .select("id,organization_id,waba_id")
           .eq("phone_number_id", phoneNumberId)
           .maybeSingle();
         if (connectionError) throw connectionError;
         if (!connection) continue;
+
+        // Cross-check the WABA envelope when Meta supplies it. The phone number
+        // ID remains the primary lookup, while this prevents mismatched account
+        // metadata from being routed into a tenant's inbox.
+        if (entry?.id && connection.waba_id && String(entry.id) !== String(connection.waba_id)) {
+          console.warn("[WhatsApp webhook] WABA/phone-number mapping mismatch; event skipped.");
+          continue;
+        }
 
         const isAppEcho = change.field === "smb_message_echoes";
         const eventMessages = value.messages ?? value.smb_message_echoes ?? [];
