@@ -30,7 +30,7 @@ export default async function PlatformAdminPage() {
     admin.from("organizations").select("id,name,slug,status,created_at").order("created_at", { ascending: false }).limit(200),
     admin.from("organization_members").select("organization_id,user_id,role,created_at").limit(1000),
     admin.from("whatsapp_connections").select("id,organization_id,display_phone_number,verified_name,connection_status,last_webhook_at,created_at").order("created_at", { ascending: false }).limit(200),
-    admin.from("whatsapp_ai_settings").select("id,organization_id,enabled,bot_name,updated_at").order("updated_at", { ascending: false }).limit(200),
+    Promise.resolve().then(() => admin.from("whatsapp_ai_settings").select("id,organization_id,enabled,bot_name,updated_at").order("updated_at", { ascending: false }).limit(200)).catch((error) => ({ data: [], error: { message: error instanceof Error ? error.message : "AI settings query failed" } })),
     admin.from("whatsapp_campaigns").select("id,organization_id,name,status,recipient_count,sent_count,failed_count,created_at").order("created_at", { ascending: false }).limit(100),
     admin.from("conversations").select("id", { count: "exact", head: true }),
     admin.from("messages").select("id", { count: "exact", head: true }),
