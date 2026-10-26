@@ -32,20 +32,43 @@ export default async function PlatformAdminPage() {
   }
 
   const admin = createSupabaseClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-  const [{ data: userData, error: userError }, { data: orgData, error: orgError }] = await Promise.all([
+  const [
+    { data: userData, error: userError },
+    { data: orgData, error: orgError },
+    { data: connectionData, error: connectionError },
+    { data: campaignData, error: campaignError },
+    { data: aiData, error: aiError },
+    { count: conversationCount },
+    { count: messageCount }
+  ] = await Promise.all([
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-    admin.from("organizations").select("id,name,slug,status,created_at").order("created_at", { ascending: false }).limit(100)
+    admin.from("organizations").select("id,name,slug,status,created_at").order("created_at", { ascending: false }).limit(100),
+    admin.from("whatsapp_connections").select("id,organization_id,display_phone_number,verified_name,connection_status,last_webhook_at,created_at").order("created_at", { ascending: false }).limit(100),
+    admin.from("whatsapp_campaigns").select("id,organization_id,name,status,recipient_count,sent_count,failed_count,created_at").order("created_at", { ascending: false }).limit(100),
+    admin.from("whatsapp_ai_settings").select("id,organization_id,enabled,bot_name,updated_at").order("updated_at", { ascending: false }).limit(100),
+    admin.from("conversations").select("id", { count: "exact", head: true }),
+    admin.from("messages").select("id", { count: "exact", head: true })
   ]);
   const users = userData?.users ?? [];
   const orgs = orgData ?? [];
+  const connections = connectionData ?? [];
+  const campaigns = campaignData ?? [];
+  const aiSettings = aiData ?? [];
   const confirmed = users.filter(item => Boolean(item.email_confirmed_at)).length;
   const pending = users.length - confirmed;
+  const connectedCount = connections.filter(item => item.connection_status === "connected").length;
+  const activeBots = aiSettings.filter(item => item.enabled).length;
+  const orgNames = new Map(orgs.map(org => [org.id, org.name]));
 
   const cards = [
     { label: "Registered users", value: String(users.length), detail: "Latest up to 1,000 accounts", icon: Users },
+    { label: "Client workspaces", value: orgError ? "—" : String(orgs.length), detail: orgError ? "Workspace query unavailable" : "Latest up to 100 workspaces", icon: Building2 },
+    { label: "WhatsApp connected", value: connectionError ? "—" : String(connectedCount), detail: connectionError ? "Connection query unavailable" : `${connections.length} latest connections loaded`, icon: MessageCircle },
+    { label: "AI bots enabled", value: aiError ? "—" : String(activeBots), detail: aiError ? "AI settings query unavailable" : "Enabled workspace bots", icon: Bot },
+    { label: "Conversations", value: String(conversationCount ?? 0), detail: "All workspaces", icon: MessageCircle },
+    { label: "Messages", value: String(messageCount ?? 0), detail: "All workspaces", icon: Send },
     { label: "Confirmed emails", value: String(confirmed), detail: "Verified accounts", icon: UserCheck },
-    { label: "Pending confirmation", value: String(pending), detail: "Need email verification", icon: Clock3 },
-    { label: "Workspaces / clients", value: orgError ? "—" : String(orgs.length), detail: orgError ? "Workspace query unavailable" : "Latest up to 100 workspaces", icon: Building2 }
+    { label: "Pending confirmation", value: String(pending), detail: "Need email verification", icon: Clock3 }
   ];
 
   const shortcuts = [
@@ -69,6 +92,20 @@ export default async function PlatformAdminPage() {
       <section className="mt-9 rounded-3xl border border-white/10 bg-[#14171c] p-5 md:p-7"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Recent workspaces / clients</h2><p className="mt-1 text-sm text-gray-400">Latest workspace records in the database.</p></div><Link href="/dashboard/admin/users" className="text-sm text-orange-300 hover:underline">View registrations ↗</Link></div>
       {orgError ? <p className="text-sm text-amber-300">Workspace list could not load. Verify the Supabase service-role key and organizations table permissions.</p> : !orgs.length ? <p className="text-sm text-gray-400">No workspaces found yet. Registered accounts will appear above; create a workspace to see it here.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="text-xs uppercase tracking-wider text-gray-500"><tr><th className="pb-3 pr-4">Workspace</th><th className="pb-3 pr-4">Slug</th><th className="pb-3 pr-4">Status</th><th className="pb-3">Created</th></tr></thead><tbody>{orgs.map(org => <tr key={org.id} className="border-t border-white/10"><td className="py-4 pr-4 font-semibold">{org.name}</td><td className="py-4 pr-4 text-gray-400">{org.slug}</td><td className="py-4 pr-4"><span className="rounded-full bg-orange-300/10 px-3 py-1 text-orange-200">{org.status ?? "unknown"}</span></td><td className="py-4 text-gray-400">{org.created_at ? new Date(org.created_at).toLocaleString("en-IN") : "—"}</td></tr>)}</tbody></table></div>}
       {userError && <p className="mt-4 text-sm text-red-300">Could not load Auth registrations. Check Supabase service-role configuration.</p>}
+      </section>
+      <section className="mt-6 grid gap-6 xl:grid-cols-2">
+        <div className="rounded-3xl border border-white/10 bg-[#14171c] p-5 md:p-7">
+          <h2 className="text-xl font-bold">WhatsApp connections</h2><p className="mt-1 text-sm text-gray-400">Connection health across client workspaces.</p>
+          {connectionError ? <p className="mt-4 text-sm text-amber-300">Could not load connections. Check the database schema.</p> : connections.length === 0 ? <p className="mt-4 text-sm text-gray-400">No WhatsApp connections registered yet.</p> : <div className="mt-4 space-y-3">{connections.slice(0,8).map(c => <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 p-3"><div><strong className="block text-sm">{c.verified_name || c.display_phone_number || "WhatsApp account"}</strong><span className="text-xs text-gray-500">{orgNames.get(c.organization_id) || "Unknown workspace"}</span></div><span className={`rounded-full px-3 py-1 text-xs ${c.connection_status === "connected" ? "bg-emerald-400/10 text-emerald-300" : "bg-orange-300/10 text-orange-200"}`}>{c.connection_status}</span></div>)}</div>}
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#14171c] p-5 md:p-7">
+          <h2 className="text-xl font-bold">AI bots & campaigns</h2><p className="mt-1 text-sm text-gray-400">Latest automation and bulk messaging activity.</p>
+          <h3 className="mt-5 text-sm font-semibold text-orange-200">AI chatbot settings</h3>
+          {aiError ? <p className="mt-2 text-sm text-amber-300">Could not load AI settings.</p> : aiSettings.length === 0 ? <p className="mt-2 text-sm text-gray-400">No AI bot settings created yet.</p> : <div className="mt-3 space-y-2">{aiSettings.slice(0,5).map(a => <div key={a.id} className="flex items-center justify-between gap-3 rounded-xl bg-black/20 p-3"><div><strong className="block text-sm">{a.bot_name || "AI assistant"}</strong><span className="text-xs text-gray-500">{orgNames.get(a.organization_id) || "Workspace"}</span></div><span className={`text-xs ${a.enabled ? "text-emerald-300" : "text-gray-500"}`}>{a.enabled ? "Enabled" : "Disabled"}</span></div>)}</div>}
+          <h3 className="mt-5 text-sm font-semibold text-orange-200">Recent bulk campaigns</h3>
+          {campaignError ? <p className="mt-2 text-sm text-amber-300">Could not load campaigns.</p> : campaigns.length === 0 ? <p className="mt-2 text-sm text-gray-400">No campaigns created yet.</p> : <div className="mt-3 space-y-2">{campaigns.slice(0,5).map(c => <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl bg-black/20 p-3"><div><strong className="block text-sm">{c.name}</strong><span className="text-xs text-gray-500">{orgNames.get(c.organization_id) || "Workspace"} · {c.sent_count ?? 0} sent / {c.recipient_count ?? 0} recipients</span></div><span className="text-xs text-gray-400">{c.status}</span></div>)}</div>}
+          <div className="mt-5 flex flex-wrap gap-3"><Link href="/dashboard/automation" className="rounded-xl bg-orange-400 px-4 py-2 text-sm font-semibold text-black">Manage AI bot ↗</Link><Link href="/dashboard/campaigns" className="rounded-xl border border-white/15 px-4 py-2 text-sm">Open campaigns ↗</Link></div>
+        </div>
       </section>
       <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-xs text-gray-500"><span>© {new Date().getFullYear()} AI SOFT STUDIO · Admin access restricted</span><span><ShieldCheck className="mr-1 inline" size={13}/> Server-side admin verification</span></footer>
     </div>
