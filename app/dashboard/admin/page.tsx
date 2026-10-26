@@ -4,7 +4,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import {
   ShieldCheck, Users, Building2, Bot, MessageCircle, Send, Settings,
-  ArrowUpRight, UserCheck, Clock3, LayoutDashboard
+  ArrowUpRight, UserCheck, Clock3, LayoutDashboard, KeyRound, Webhook, Activity, PlugZap
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,9 @@ export default async function PlatformAdminPage() {
     { data: campaignData, error: campaignError },
     { data: aiData, error: aiError },
     { count: conversationCount },
-    { count: messageCount }
+    { count: messageCount },
+    { data: apiSettingsData, error: apiSettingsError },
+    { count: memberCount, error: memberError }
   ] = await Promise.all([
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     admin.from("organizations").select("id,name,slug,status,created_at").order("created_at", { ascending: false }).limit(100),
@@ -47,13 +49,17 @@ export default async function PlatformAdminPage() {
     admin.from("whatsapp_campaigns").select("id,organization_id,name,status,recipient_count,sent_count,failed_count,created_at").order("created_at", { ascending: false }).limit(100),
     admin.from("whatsapp_ai_settings").select("id,organization_id,enabled,bot_name,updated_at").order("updated_at", { ascending: false }).limit(100),
     admin.from("conversations").select("id", { count: "exact", head: true }),
-    admin.from("messages").select("id", { count: "exact", head: true })
+    admin.from("messages").select("id", { count: "exact", head: true }),
+    admin.from("organization_api_settings").select("organization_id,api_key_prefix,webhook_url,created_at,updated_at").order("updated_at", { ascending: false }).limit(100),
+    admin.from("organization_members").select("user_id", { count: "exact", head: true })
   ]);
   const users = userData?.users ?? [];
   const orgs = orgData ?? [];
   const connections = connectionData ?? [];
   const campaigns = campaignData ?? [];
   const aiSettings = aiData ?? [];
+  const apiSettings = apiSettingsData ?? [];
+  const webhooksConfigured = apiSettings.filter(item => Boolean(item.webhook_url)).length;
   const confirmed = users.filter(item => Boolean(item.email_confirmed_at)).length;
   const pending = users.length - confirmed;
   const connectedCount = connections.filter(item => item.connection_status === "connected").length;
@@ -68,7 +74,10 @@ export default async function PlatformAdminPage() {
     { label: "Conversations", value: String(conversationCount ?? 0), detail: "All workspaces", icon: MessageCircle },
     { label: "Messages", value: String(messageCount ?? 0), detail: "All workspaces", icon: Send },
     { label: "Confirmed emails", value: String(confirmed), detail: "Verified accounts", icon: UserCheck },
-    { label: "Pending confirmation", value: String(pending), detail: "Need email verification", icon: Clock3 }
+    { label: "Pending confirmation", value: String(pending), detail: "Need email verification", icon: Clock3 },
+    { label: "API workspaces", value: apiSettingsError ? "—" : String(apiSettings.length), detail: apiSettingsError ? "API settings query unavailable" : "Workspaces with API settings", icon: KeyRound },
+    { label: "Webhooks configured", value: apiSettingsError ? "—" : String(webhooksConfigured), detail: apiSettingsError ? "Webhook query unavailable" : "Client webhook URLs saved", icon: Webhook },
+    { label: "Workspace members", value: memberError ? "—" : String(memberCount ?? 0), detail: memberError ? "Membership query unavailable" : "Across all client workspaces", icon: Users }
   ];
 
   const shortcuts = [
@@ -77,6 +86,7 @@ export default async function PlatformAdminPage() {
     { title: "AI chatbot settings", desc: "Configure AI replies, bot name and instructions for a workspace.", href: "/dashboard/automation", icon: Bot },
     { title: "Bulk messaging", desc: "Open campaign tools and messaging workflows.", href: "/dashboard/campaigns", icon: Send },
     { title: "Customer inbox", desc: "View conversations handled by the platform.", href: "/dashboard/conversations", icon: MessageCircle },
+    { title: "API & Webhooks", desc: "Open workspace API credentials and webhook configuration.", href: "/dashboard/api", icon: Webhook },
     { title: "Workspace dashboard", desc: "Return to the main application dashboard.", href: "/dashboard", icon: LayoutDashboard }
   ];
 
@@ -88,6 +98,7 @@ export default async function PlatformAdminPage() {
       </header>
       <section className="py-9"><span className="text-xs font-bold tracking-[0.25em] text-orange-300">CONTROL CENTER</span><h1 className="mt-3 text-4xl font-black md:text-5xl">Admin <span className="text-orange-300">Panel</span></h1><p className="mt-3 max-w-2xl text-gray-400">Manage platform registrations and quickly access clients, WhatsApp, AI automation and messaging tools from one place.</p></section>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(card => { const Icon = card.icon; return <article key={card.label} className="rounded-3xl border border-white/10 bg-[#14171c] p-5"><div className="flex items-center justify-between"><span className="text-sm text-gray-400">{card.label}</span><Icon className="text-orange-300" size={21}/></div><strong className="mt-4 block text-4xl font-bold">{card.value}</strong><p className="mt-2 text-xs text-gray-500">{card.detail}</p></article>; })}</section>
+      <section className="mt-9 rounded-3xl border border-orange-300/20 bg-gradient-to-r from-orange-400/10 via-[#14171c] to-[#14171c] p-5 md:p-7"><div className="flex flex-wrap items-start justify-between gap-4"><div><span className="text-xs font-bold tracking-[0.2em] text-orange-300">PLATFORM OPERATIONS</span><h2 className="mt-2 text-xl font-bold">Service overview</h2><p className="mt-2 max-w-2xl text-sm text-gray-400">Quick links and configuration visibility for Meta onboarding, AI automation, API access, webhooks and client support. A configured indicator does not replace a real end-to-end test.</p></div><Activity className="text-orange-300" size={28}/></div><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><span className="text-xs text-gray-400">Meta Embedded Signup</span><strong className="mt-2 block text-sm">{process.env.META_APP_ID && process.env.META_EMBEDDED_SIGNUP_CONFIG_ID ? "Environment configured" : "Needs configuration"}</strong><span className="mt-1 block text-xs text-gray-500">App ID + Signup config presence only</span></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><span className="text-xs text-gray-400">AI replies</span><strong className="mt-2 block text-sm">{process.env.OPENAI_API_KEY ? "API key configured" : "API key missing"}</strong><span className="mt-1 block text-xs text-gray-500">Key value is never displayed</span></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><span className="text-xs text-gray-400">Server admin data access</span><strong className="mt-2 block text-sm">{process.env.SUPABASE_SERVICE_ROLE_KEY ? "Service key configured" : "Service key missing"}</strong><span className="mt-1 block text-xs text-gray-500">Server-side only</span></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><span className="text-xs text-gray-400">Workspace API / webhooks</span><strong className="mt-2 block text-sm">{apiSettingsError ? "Database query error" : `${apiSettings.length} API settings · ${webhooksConfigured} webhooks`}</strong><span className="mt-1 block text-xs text-gray-500">Configured endpoints; delivery needs testing</span></div></div><div className="mt-4 flex flex-wrap gap-3"><Link href="/dashboard/whatsapp" className="rounded-xl bg-orange-400 px-4 py-2 text-sm font-semibold text-black">Connect WhatsApp ↗</Link><Link href="/dashboard/api" className="rounded-xl border border-white/15 px-4 py-2 text-sm hover:border-orange-300">Manage API & Webhooks ↗</Link><Link href="/dashboard/automation" className="rounded-xl border border-white/15 px-4 py-2 text-sm hover:border-orange-300">Configure AI bot ↗</Link></div></section>
       <section className="mt-9"><div className="mb-4 flex items-center gap-2"><Settings className="text-orange-300" size={20}/><h2 className="text-xl font-bold">Admin tools</h2></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{shortcuts.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} className="group rounded-3xl border border-white/10 bg-[#14171c] p-5 transition hover:-translate-y-0.5 hover:border-orange-300/60"><div className="flex items-center justify-between"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-orange-400/10 text-orange-300"><Icon size={21}/></span><ArrowUpRight size={18} className="text-gray-500 group-hover:text-orange-300"/></div><h3 className="mt-4 text-lg font-bold">{item.title}</h3><p className="mt-2 text-sm leading-6 text-gray-400">{item.desc}</p></Link>; })}</div></section>
       <section className="mt-9 rounded-3xl border border-white/10 bg-[#14171c] p-5 md:p-7"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Recent workspaces / clients</h2><p className="mt-1 text-sm text-gray-400">Latest workspace records in the database.</p></div><Link href="/dashboard/admin/users" className="text-sm text-orange-300 hover:underline">View registrations ↗</Link></div>
       {orgError ? <p className="text-sm text-amber-300">Workspace list could not load. Verify the Supabase service-role key and organizations table permissions.</p> : !orgs.length ? <p className="text-sm text-gray-400">No workspaces found yet. Registered accounts will appear above; create a workspace to see it here.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="text-xs uppercase tracking-wider text-gray-500"><tr><th className="pb-3 pr-4">Workspace</th><th className="pb-3 pr-4">Slug</th><th className="pb-3 pr-4">Status</th><th className="pb-3">Created</th></tr></thead><tbody>{orgs.map(org => <tr key={org.id} className="border-t border-white/10"><td className="py-4 pr-4 font-semibold">{org.name}</td><td className="py-4 pr-4 text-gray-400">{org.slug}</td><td className="py-4 pr-4"><span className="rounded-full bg-orange-300/10 px-3 py-1 text-orange-200">{org.status ?? "unknown"}</span></td><td className="py-4 text-gray-400">{org.created_at ? new Date(org.created_at).toLocaleString("en-IN") : "—"}</td></tr>)}</tbody></table></div>}
