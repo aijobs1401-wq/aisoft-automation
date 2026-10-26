@@ -58,7 +58,7 @@ export default async function WhatsAppSetupPage() {
   return (
     <main className="dashboard-wrap wa-control-center">
       <style>{`
-        .wa-control-center{position:relative;isolation:isolate;overflow:hidden}
+        .wa-control-center{position:relative;isolation:isolate;overflow:hidden;background:#06101f;color:#f4f9ff;border-radius:22px;padding:0 22px 28px;min-height:100vh}\n        .wa-control-center .dash-tile,.wa-control-center .org-panel{background:linear-gradient(145deg,#071d3b 0%,#06152b 72%,#071b35 100%);border:1px solid #168dff72;border-radius:18px;box-shadow:inset 0 1px 0 #ffffff0a,0 12px 32px #0003}\n        .wa-control-center .btn{background:linear-gradient(100deg,#087cff,#08c8ed);color:#fff;border:0;border-radius:12px;box-shadow:0 6px 22px #078bff38}\n        .wa-control-center .sub{color:#a9c3e0}\n        .wa-control-center .dash-nav{border-bottom:1px solid #168dff38;padding-bottom:16px}\n        .wa-control-center .wa-tool-card{background:linear-gradient(135deg,#062647,#071631 70%,#061d3b);min-height:210px}\n        .wa-control-center .wa-hero-title{max-width:780px}\n        .wa-control-center .wa-gradient-text{background-image:linear-gradient(100deg,#28d7f7 0%,#2483ff 48%,#eafaff 100%)}
         .wa-control-center:before{content:"";position:absolute;z-index:-1;pointer-events:none;inset:0 -18vw auto;height:560px;background:radial-gradient(ellipse at 18% 20%,#1678ff25,transparent 42%),radial-gradient(ellipse at 76% 8%,#20d8ed18,transparent 38%);animation:waAura 9s ease-in-out infinite alternate}
         .wa-control-center .dash-nav{position:relative;z-index:1}
         .wa-control-center .brand .logo{box-shadow:0 0 25px #2483ff42;animation:waLogoPulse 3.5s ease-in-out infinite}
@@ -109,9 +109,9 @@ export default async function WhatsAppSetupPage() {
       </header>
 
       <section className="wa-hero">
-        <span className="wa-kicker"><span className="wa-live-dot" /> WHATSAPP CONTROL CENTER <span aria-hidden="true">✨</span></span>
-        <h1 className="wa-hero-title"><span className="wa-gradient-text">Your WhatsApp, supercharged.</span><span className="wa-wand" aria-label="Magic automation"><WandSparkles size={25} /></span></h1>
-        <p className="wa-hero-copy">Connect your business with Meta’s official WhatsApp onboarding, then bring conversations, campaigns and AI-powered replies together in one smart workspace. Less busywork, more ✨ magic.</p>
+        <span className="wa-kicker"><span className="wa-live-dot" /> AI POWERED <span aria-hidden="true">✨</span></span>
+        <h1 className="wa-hero-title"><span className="wa-gradient-text">WhatsApp Control Center</span><span className="wa-wand" aria-label="Magic automation"><WandSparkles size={25} /></span></h1>
+        <p className="wa-hero-copy">Manage your WhatsApp business, automate conversations, and grow your audience — all in one place. 🪄</p>
         <div className="wa-hero-chips">
           <span className="wa-hero-chip">🔐 Official Meta onboarding</span>
           <span className="wa-hero-chip">🤖 AI-powered automation</span>
