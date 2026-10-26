@@ -57,7 +57,7 @@ export default function DashboardPage() {
           <Link className="app-side-link" href="/dashboard/conversations"><Users size={17} /> Conversations</Link>\n          <Link className="app-side-link" href="/dashboard/campaigns"><Send size={17} /> Bulk campaigns <ArrowUpRight size={14} /></Link>
           <Link className="app-side-link" href="/dashboard/automation"><Bot size={17} /> AI replies & chatbot <ArrowUpRight size={14} /></Link>
           <Link className="app-side-link" href="/dashboard/api"><Webhook size={17} /> API & Webhooks <ArrowUpRight size={14} /></Link>
-          {email.toLowerCase() === "admin@aisoft.app" && <Link className="app-side-link" href="/dashboard/admin"><ShieldCheck size={17} /> Admin panel <ArrowUpRight size={14} /></Link>}
+          {email.toLowerCase() === "admin@aisoft.app" && <Link className="app-side-link" href="/admin"><ShieldCheck size={17} /> Admin panel <ArrowUpRight size={14} /></Link>}
           <a className="app-side-link muted-link" href="#automation"><Zap size={17} /> Automations <span className="coming-pill">SOON</span></a>
           <a className="app-side-link muted-link" href="#analytics"><Settings2 size={17} /> Analytics <span className="coming-pill">SOON</span></a>
         </nav>
