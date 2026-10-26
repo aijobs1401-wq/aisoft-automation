@@ -65,7 +65,7 @@ export async function createClientWorkspace(formData: FormData) {
     throw new Error(`Workspace created but owner assignment failed; rollback attempted: ${memberError.message}`);
   }
   revalidatePath("/admin");
-  revalidatePath("/admin/users");
+  revalidatePath("/dashboard/admin/users");
 }
 
 export async function addWorkspaceMember(formData: FormData) {
