@@ -42,7 +42,7 @@ export async function updateWorkspaceBot(formData: FormData) {
     { onConflict: "organization_id" }
   );
   if (error) {
-    console.error("AI bot update failed", { code: error.code, message: error.message });
+    console.error("AI bot update failed", { code: error.code, message: error.message, supabaseHost: process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host : "missing" });
     throw new Error(`AI bot update failed: ${error.message}`);
   }
   revalidatePath("/dashboard/admin");
