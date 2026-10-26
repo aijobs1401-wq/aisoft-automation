@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import SignOutButton from "./sign-out-button";
 import {
   ArrowUpRight, Bot, CheckCircle2, ChevronRight, CircleHelp, Command, Send,
-  MessageCircle, Plus, Settings2, ShieldCheck, Sparkles, Users, Webhook, Zap
+  MessageCircle, Settings2, ShieldCheck, Sparkles, Users, Webhook, Zap
 } from "lucide-react";
 
 type Membership = { role: string; organizations: { name: string; status: string; slug: string } | null };
@@ -54,10 +54,10 @@ export default function DashboardPage() {
         <nav className="app-side-nav" aria-label="Workspace navigation">
           <Link className="app-side-link active" href="/dashboard"><Command size={17} /> Overview</Link>
           <Link className="app-side-link" href="/dashboard/whatsapp"><MessageCircle size={17} /> WhatsApp setup <ArrowUpRight size={14} /></Link>
-          <Link className="app-side-link" href="/dashboard/conversations"><Users size={17} /> Conversations</Link>\n          <Link className="app-side-link" href="/dashboard/campaigns"><Send size={17} /> Bulk campaigns <ArrowUpRight size={14} /></Link>
+          <Link className="app-side-link" href="/dashboard/conversations"><Users size={17} /> Conversations</Link>
+          <Link className="app-side-link" href="/dashboard/campaigns"><Send size={17} /> Bulk campaigns <ArrowUpRight size={14} /></Link>
           <Link className="app-side-link" href="/dashboard/automation"><Bot size={17} /> AI replies & chatbot <ArrowUpRight size={14} /></Link>
           <Link className="app-side-link" href="/dashboard/api"><Webhook size={17} /> API & Webhooks <ArrowUpRight size={14} /></Link>
-          {email.toLowerCase() === "admin@aisoft.app" && <Link className="app-side-link" href="/dashboard/admin"><ShieldCheck size={17} /> Admin panel <ArrowUpRight size={14} /></Link>}
           <a className="app-side-link muted-link" href="#automation"><Zap size={17} /> Automations <span className="coming-pill">SOON</span></a>
           <a className="app-side-link muted-link" href="#analytics"><Settings2 size={17} /> Analytics <span className="coming-pill">SOON</span></a>
         </nav>
