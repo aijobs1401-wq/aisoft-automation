@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, ArrowRight, ArrowUpRight, Bot, CheckCircle2, ChevronDown, CircleHelp, ContactRound, CreditCard, Instagram, LayoutDashboard, Megaphone, MessageCircle, MessagesSquare, Plus, Settings, ShieldCheck, Sparkles, Users, Wallet, Webhook, Zap, Bell } from "lucide-react";
+import { Activity, ArrowRight, ArrowUpRight, Bot, CheckCircle2, Code2, ChevronDown, CircleHelp, ContactRound, CreditCard, Instagram, LayoutDashboard, Megaphone, MessageCircle, MessagesSquare, Plus, Settings, ShieldCheck, Sparkles, Users, Wallet, Webhook, Zap, Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import SignOutButton from "./sign-out-button";
 import "./interakt-dashboard.css";
@@ -82,7 +82,8 @@ export default function DashboardPage() {
         <Link className="ifx-nav-link" href="/dashboard/campaigns"><Megaphone size={18}/> Campaigns</Link>
         <Link className="ifx-nav-link" href="/dashboard/whatsapp"><ContactRound size={18}/> Contacts & numbers</Link>
         <Link className="ifx-nav-link" href="/dashboard/automation"><Bot size={18}/> Automation</Link>
-        <Link className="ifx-nav-link" href="/dashboard/api"><Webhook size={18}/> Integrations & API</Link>
+        <Link className="ifx-nav-link" href="/dashboard/integrations"><Webhook size={18}/> Integrations</Link>
+        <Link className="ifx-nav-link" href="/dashboard/api"><Code2 size={18}/> API & Webhooks</Link>
       </nav>
       <div className="ifx-nav-label ifx-nav-label-spaced">MANAGE</div>
       <nav className="ifx-nav" aria-label="Management navigation">
@@ -101,7 +102,7 @@ export default function DashboardPage() {
         <section className="ifx-welcome"><div><div className="ifx-eyebrow">YOUR BUSINESS CONTROL CENTER</div><h1>Welcome, {greetingName}!</h1><p>Manage customer conversations, connect channels, and automate your support from one place.</p></div><Link className="ifx-primary-button" href="/dashboard/whatsapp"><Plus size={17}/> Connect WhatsApp</Link></section>
         {loadError ? <div className="ifx-alert" role="status">{loadError}</div> : null}
 
-        <section className="ifx-channel-switch" aria-label="Available channels"><Link href="/dashboard/whatsapp" className="ifx-channel is-selected"><MessageCircle size={18}/> WhatsApp <span className={connected ? "ifx-dot is-green" : "ifx-dot"}/></Link><Link href="/dashboard/api" className="ifx-channel"><Instagram size={18}/> Instagram <span className="ifx-coming">Setup</span></Link><span className="ifx-channel-note"><ShieldCheck size={15}/> Official Meta connection</span></section>
+        <section className="ifx-channel-switch" aria-label="Available channels"><Link href="/dashboard/whatsapp" className="ifx-channel is-selected"><MessageCircle size={18}/> WhatsApp <span className={connected ? "ifx-dot is-green" : "ifx-dot"}/></Link><Link href="/dashboard/integrations" className="ifx-channel"><Instagram size={18}/> Integrations <span className="ifx-coming">Manage</span></Link><span className="ifx-channel-note"><ShieldCheck size={15}/> Official Meta connection</span></section>
 
         <section className="ifx-agent-banner"><div className="ifx-agent-icon"><Bot size={25}/></div><div className="ifx-agent-copy"><strong>Build your AI Agent</strong><p>Handle common questions, qualify leads, and assist customers automatically.</p></div><Link href="/dashboard/automation" className="ifx-dark-button">Configure agent <ArrowRight size={16}/></Link></section>
 
@@ -128,7 +129,7 @@ export default function DashboardPage() {
             <Link className="ifx-summary-button" href="/dashboard/whatsapp">Manage WhatsApp setup <ArrowRight size={15}/></Link>
           </article>
         </section>
-        <footer className="ifx-footer"><span>© {new Date().getFullYear()} AI SOFT STUDIO</span><span><ShieldCheck size={13}/> Workspace-scoped business data.</span><Link href="/dashboard/api">API & Webhooks <ArrowUpRight size={13}/></Link></footer>
+        <footer className="ifx-footer"><span>© {new Date().getFullYear()} AI SOFT STUDIO</span><span><ShieldCheck size={13}/> Workspace-scoped business data.</span><Link href="/dashboard/integrations">All integrations <ArrowUpRight size={13}/></Link></footer>
       </div>
     </section>
   </main>;
