@@ -57,6 +57,9 @@ export async function POST(request: Request) {
     updated_by: user.id,
     updated_at: new Date().toISOString()
   }, { onConflict: "organization_id" });
-  if (saveError) return NextResponse.json({ error: "Could not save AI settings." }, { status: 500 });
+  if (saveError) {
+    console.error("AI settings save failed", { code: saveError.code, message: saveError.message, details: saveError.details, hint: saveError.hint });
+    return NextResponse.json({ error: `Could not save AI settings: ${saveError.message}` }, { status: 500 });
+  }
   return NextResponse.json({ ok: true, enabled: body.enabled });
 }
