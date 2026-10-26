@@ -121,9 +121,7 @@ export async function POST(request: Request) {
       waba_id: wabaId,
       display_phone_number: phone.display_phone_number ?? null,
       verified_name: phone.verified_name ?? null,
-      connection_status: "connected",
-      token_ciphertext: encryptWhatsAppToken(accessToken),
-      token_key_version: 1,
+      connection_status: "pending",
       updated_at: new Date().toISOString()
     };
     const saved = existing
@@ -131,6 +129,27 @@ export async function POST(request: Request) {
       : await admin.from("whatsapp_connections").insert({ ...connectionValues, created_at: new Date().toISOString() }).select("id").single();
     if (saved.error || !saved.data) throw saved.error || new Error("Could not save WhatsApp connection.");
 
+    stage = "save_encrypted_whatsapp_secret";
+    const expiresAt = typeof tokenData.expires_in === "number" && tokenData.expires_in > 0
+      ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+      : null;
+    const { error: secretSaveError } = await admin.from("whatsapp_connection_secrets").upsert({
+      connection_id: saved.data.id,
+      token_ciphertext: encryptWhatsAppToken(accessToken),
+      token_key_version: 1,
+      token_expires_at: expiresAt,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "connection_id" });
+    if (secretSaveError) {
+      await admin.from("whatsapp_connections").update({ connection_status: "error", updated_at: new Date().toISOString() }).eq("id", saved.data.id);
+      throw secretSaveError;
+    }
+
+    stage = "mark_connection_connected";
+    const { error: activateError } = await admin.from("whatsapp_connections")
+      .update({ connection_status: "connected", updated_at: new Date().toISOString() })
+      .eq("id", saved.data.id);
+    if (activateError) throw activateError;
 
     console.info(`[WhatsApp signup ${requestId}] completed successfully`);
     return NextResponse.json({
