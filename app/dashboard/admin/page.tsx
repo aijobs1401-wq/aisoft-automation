@@ -106,7 +106,7 @@ export default async function PlatformAdminPage() {
       </section>
 
       <section className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[
-        {title:"Registrations",desc:"Search registration list and email verification state.",href:"/dashboard/dashboard/admin/users",Icon:Users},
+        {title:"Registrations",desc:"Search registration list and email verification state.",href:"/dashboard/admin/users",Icon:Users},
         {title:"WhatsApp",desc:"Meta onboarding and connection setup.",href:"/dashboard/whatsapp",Icon:PlugZap},
         {title:"API & webhooks",desc:"Workspace API settings and event delivery.",href:"/dashboard/api",Icon:Webhook},
         {title:"Automation",desc:"Bot instructions and auto-reply configuration.",href:"/dashboard/automation",Icon:Settings}
