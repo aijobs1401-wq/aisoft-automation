@@ -24,20 +24,33 @@ export async function GET() {
   const ctx = await getWorkspace();
   if ("response" in ctx) return ctx.response;
   const { data: existing, error } = await ctx.admin.from("organization_api_settings")
-    .select("organization_id,api_key_prefix,webhook_url,created_at,updated_at")
+    .select("organization_id,api_key_prefix,webhook_url,webhook_secret,created_at,updated_at")
     .eq("organization_id", ctx.membership.organization_id).maybeSingle();
   if (error) return NextResponse.json({ error: "Could not load API settings." }, { status: 500 });
-  if (existing) return NextResponse.json({ settings: existing, apiKey: null, keyCreated: false });
+  if (existing) {
+    if (!existing.webhook_secret) {
+      const webhookSecret = "whsec_" + randomBytes(32).toString("base64url");
+      const { error: updateError } = await ctx.admin.from("organization_api_settings")
+        .update({ webhook_secret: webhookSecret }).eq("organization_id", ctx.membership.organization_id);
+      if (updateError) return NextResponse.json({ error: "Could not initialize webhook signing secret." }, { status: 500 });
+      const { webhook_secret: _secret, ...settings } = existing;
+      return NextResponse.json({ settings: { ...settings }, apiKey: null, webhookSecret, keyCreated: false });
+    }
+    const { webhook_secret: _secret, ...settings } = existing;
+    return NextResponse.json({ settings, apiKey: null, webhookSecret: null, keyCreated: false });
+  }
 
   const apiKey = "gfs_" + randomBytes(32).toString("base64url");
+  const webhookSecret = "whsec_" + randomBytes(32).toString("base64url");
   const { data, error: insertError } = await ctx.admin.from("organization_api_settings").insert({
     organization_id: ctx.membership.organization_id,
     api_key_hash: hashKey(apiKey),
     api_key_prefix: apiKey.slice(0, 12),
-    webhook_url: null
+    webhook_url: null,
+    webhook_secret: webhookSecret
   }).select("organization_id,api_key_prefix,webhook_url,created_at,updated_at").single();
   if (insertError) return NextResponse.json({ error: "Could not create your API key. Refresh and try again." }, { status: 500 });
-  return NextResponse.json({ settings: data, apiKey, keyCreated: true });
+  return NextResponse.json({ settings: data, apiKey, webhookSecret, keyCreated: true });
 }
 
 export async function PATCH(request: Request) {
@@ -49,10 +62,11 @@ export async function PATCH(request: Request) {
   if (webhookUrl) {
     try {
       const parsed = new URL(webhookUrl);
-      if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") throw new Error();
-      if (parsed.username || parsed.password) throw new Error();
+      if (parsed.protocol !== "https:" || parsed.username || parsed.password || ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname)) throw new Error();
+      const host = parsed.hostname.toLowerCase();
+      if (host === "169.254.169.254" || host.endsWith(".internal") || host.endsWith(".local")) throw new Error();
     } catch {
-      return NextResponse.json({ error: "Enter a valid HTTPS webhook URL." }, { status: 400 });
+      return NextResponse.json({ error: "Enter a valid public HTTPS webhook URL." }, { status: 400 });
     }
   }
   const { error } = await ctx.admin.from("organization_api_settings").update({
@@ -74,5 +88,5 @@ export async function POST() {
   }, { onConflict: "organization_id" })
   .select("organization_id,api_key_prefix,webhook_url,created_at,updated_at").single();
   if (error) return NextResponse.json({ error: "Could not rotate API key." }, { status: 500 });
-  return NextResponse.json({ settings: data, apiKey, keyCreated: true });
+  return NextResponse.json({ settings: data, apiKey, webhookSecret: null, keyCreated: true });
 }
