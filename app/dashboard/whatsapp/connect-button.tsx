@@ -13,6 +13,7 @@ declare global {
 }
 
 type SessionInfo = { wabaId: string; phoneNumberId: string };
+type OnboardingMode = "coexistence" | "api_only";
 
 export default function WhatsAppConnectButton({
   organizationId,
@@ -31,6 +32,7 @@ export default function WhatsAppConnectButton({
   const [message, setMessage] = useState("");
   const [code, setCode] = useState("");
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
+  const [onboardingMode, setOnboardingMode] = useState<OnboardingMode>("coexistence");
   const submitted = useRef(false);
 
   useEffect(() => {
@@ -94,7 +96,8 @@ export default function WhatsAppConnectButton({
         code,
         wabaId: sessionInfo.wabaId,
         phoneNumberId: sessionInfo.phoneNumberId,
-        organizationId
+        organizationId,
+        onboardingMode
       })
     })
       .then(async response => {
@@ -107,7 +110,7 @@ export default function WhatsAppConnectButton({
         setError(err instanceof Error ? err.message : "WhatsApp connection failed.");
       })
       .finally(() => setBusy(false));
-  }, [code, sessionInfo, organizationId]);
+  }, [code, sessionInfo, organizationId, onboardingMode]);
 
   function launchSignup() {
     setError("");
@@ -132,7 +135,9 @@ export default function WhatsAppConnectButton({
       auth_type: "rerequest",
       response_type: "code",
       override_default_response_type: true,
-      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding" }
+      extras: onboardingMode === "coexistence"
+        ? { setup: {}, featureType: "whatsapp_business_app_onboarding" }
+        : { setup: {} }
     });
   }
 
