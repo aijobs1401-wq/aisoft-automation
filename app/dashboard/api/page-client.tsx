@@ -7,6 +7,7 @@ type Settings = { organization_id: string; api_key_prefix: string; webhook_url: 
 export default function ApiSettingsClient() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [apiKey, setApiKey] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -22,7 +23,8 @@ export default function ApiSettingsClient() {
       setSettings(data.settings);
       setWebhookUrl(data.settings.webhook_url || "");
       if (data.apiKey) setApiKey(data.apiKey);
-      if (data.keyCreated) setNotice("A new API key was created. Copy it now; it will not be shown again.");
+      if (data.webhookSecret) setWebhookSecret(data.webhookSecret);
+      if (data.keyCreated) setNotice("API key and webhook signing secret created. Copy both now; they will not be shown again.");
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load settings."); }
     finally { setLoading(false); }
   }
@@ -73,6 +75,7 @@ export default function ApiSettingsClient() {
     <section className="dash-tile org-panel">
       <h2><Webhook size={20}/> Incoming message webhook</h2>
       <p className="sub">When an incoming WhatsApp message is stored, the platform will POST a JSON event to your HTTPS URL.</p>
+      {webhookSecret && <div className="mt-4 rounded-2xl border border-orange-300/30 bg-orange-300/5 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-orange-200">Webhook signing secret — copy now</p><p className="mt-2 break-all font-mono text-sm">{webhookSecret}</p><button type="button" onClick={() => void copy(webhookSecret)} className="mt-3 rounded-xl border border-white/15 px-3 py-2 text-sm"><Copy size={14} className="mr-2 inline"/>Copy signing secret</button><p className="mt-2 text-xs text-gray-500">Verify each delivery by HMAC-SHA256 of the raw request body; compare against the x-aisoft-signature header.</p></div>}
       <form onSubmit={saveWebhook} className="mt-4 space-y-3">
         <label htmlFor="webhook-url" className="block text-sm font-medium">Your webhook URL</label>
         <input id="webhook-url" type="url" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://yourdomain.com/webhooks/whatsapp" className="w-full rounded-xl border border-white/15 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-orange-300"/>
