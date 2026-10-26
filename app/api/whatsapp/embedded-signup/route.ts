@@ -126,6 +126,7 @@ export async function POST(request: Request) {
       waba_id: wabaId,
       display_phone_number: phone.display_phone_number ?? null,
       verified_name: phone.verified_name ?? null,
+      onboarding_mode: onboardingMode,
       connection_status: "pending",
       updated_at: new Date().toISOString()
     };
