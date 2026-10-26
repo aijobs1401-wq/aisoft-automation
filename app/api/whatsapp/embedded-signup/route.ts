@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
   const { code, wabaId, phoneNumberId, organizationId } = body;
   const onboardingMode = body.onboardingMode;
-  if (!code || !wabaId || !organizationId ||
+  if (!code || !wabaId || !organizationId || !["coexistence", "api_only"].includes(String(onboardingMode)) ||
       !/^[0-9]{5,40}$/.test(wabaId) || (phoneNumberId && !/^[0-9]{5,40}$/.test(phoneNumberId))) {
     return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA ID." }, { status: 400 });
   }
