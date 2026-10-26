@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const file = form.get("file");
   const website = String(form.get("websiteUrl") || "").trim();
   if (!organizationId || (!(file instanceof File) && !website)) return NextResponse.json({ error: "Provide a business website or GST certificate." }, { status: 400 });
-  if (website && !/^https?:\\/\\//i.test(website)) return NextResponse.json({ error: "Website URL must start with https://." }, { status: 400 });
+  if (website && !/^https?:\/\//i.test(website)) return NextResponse.json({ error: "Website URL must start with https://." }, { status: 400 });
   if (file instanceof File && !ALLOWED_TYPES.has(file.type)) return NextResponse.json({ error: "Upload a PDF, JPG, or PNG file." }, { status: 415 });
   if (file instanceof File && (file.size <= 0 || file.size > MAX_BYTES)) return NextResponse.json({ error: "The document must be smaller than 10 MB." }, { status: 413 });
 
