@@ -101,8 +101,18 @@ export default function WhatsAppConnectButton({
       })
     })
       .then(async response => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "WhatsApp connection failed.");
+        const responseText = await response.text();
+        let data: { error?: string; connection?: { phoneNumber?: string } } = {};
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          throw new Error(
+            `Server returned non-JSON response (HTTP ${response.status}): ${responseText.slice(0, 200) || "Empty response"}`
+          );
+        }
+        if (!response.ok) {
+          throw new Error(data.error || `WhatsApp connection failed (HTTP ${response.status}).`);
+        }
         setMessage(`Connected ${data.connection?.phoneNumber || "WhatsApp number"} successfully.`);
       })
       .catch(err => {
