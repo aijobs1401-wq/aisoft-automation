@@ -130,19 +130,20 @@ export default function WhatsAppConnectButton({
     setError(""); setMessage("");
     if (!websiteUrl.trim() && !gstFile && !documentPath) { setError("Please add your active business website or upload a GST certificate before continuing."); return; }
     if (websiteUrl.trim() && !/^https?:\/\//i.test(websiteUrl.trim())) { setError("Enter the full website URL starting with https://"); return; }
-    if (gstFile && !documentPath) { void uploadDocumentAndLaunch(); return; }
+    if (!documentPath) { void uploadBusinessDetailsAndLaunch(); return; }
     startMetaSignup();
   }
 
-  async function uploadDocumentAndLaunch() {
-    if (!gstFile) return;
+  async function uploadBusinessDetailsAndLaunch() {
     setDocumentBusy(true); setError("");
     try {
-      const form = new FormData(); form.append("organizationId", organizationId); form.append("file", gstFile);
+      const form = new FormData(); form.append("organizationId", organizationId);
+      if (websiteUrl.trim()) form.append("websiteUrl", websiteUrl.trim());
+      if (gstFile) form.append("file", gstFile);
       const response = await fetch("/api/whatsapp/business-document", { method: "POST", body: form });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not upload business document.");
-      setDocumentPath(String(result.path || ""));
+      setDocumentPath(String(result.path || "submitted"));
       startMetaSignup();
     } catch (err) { setError(err instanceof Error ? err.message : "Document upload failed."); }
     finally { setDocumentBusy(false); }
