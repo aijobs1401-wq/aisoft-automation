@@ -37,12 +37,14 @@ export async function updateWorkspaceBot(formData: FormData) {
   const organizationId = required(formData, "organization_id");
   const enabled = required(formData, "enabled") === "true";
   const botName = String(formData.get("bot_name") ?? "AI SOFT Assistant").trim().slice(0, 80) || "AI SOFT Assistant";
-  const { data: existing, error: readError } = await admin.from("whatsapp_ai_settings").select("id").eq("organization_id", organizationId).maybeSingle();
-  if (readError) throw new Error(`AI settings lookup failed: ${readError.message}`);
-  const result = existing
-    ? await admin.from("whatsapp_ai_settings").update({ enabled, bot_name: botName, updated_at: new Date().toISOString() }).eq("organization_id", organizationId)
-    : await admin.from("whatsapp_ai_settings").insert({ organization_id: organizationId, enabled, bot_name: botName });
-  if (result.error) throw new Error(`AI bot update failed: ${result.error.message}`);
+  const { error } = await admin.from("whatsapp_ai_settings").upsert(
+    { organization_id: organizationId, enabled, bot_name: botName, updated_at: new Date().toISOString() },
+    { onConflict: "organization_id" }
+  );
+  if (error) {
+    console.error("AI bot update failed", { code: error.code, message: error.message });
+    throw new Error(`AI bot update failed: ${error.message}`);
+  }
   revalidatePath("/dashboard/admin");
 }
 
