@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, ArrowRight, ArrowUpRight, Bot, CheckCircle2, ChevronDown, CircleHelp, ContactRound, CreditCard, Instagram, LayoutDashboard, Megaphone, MessageCircle, MessagesSquare, Plus, Settings, ShieldCheck, Sparkles, Users, Wallet, Webhook, Zap, Bell } from "lucide-react";
+import { Activity, ArrowRight, ArrowUpRight, Bot, CheckCircle2, Code2, ChevronDown, CircleHelp, ContactRound, CreditCard, Instagram, LayoutDashboard, Megaphone, MessageCircle, MessagesSquare, Plus, Settings, ShieldCheck, Sparkles, Users, Wallet, Webhook, Zap, Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import SignOutButton from "./sign-out-button";
 import "./interakt-dashboard.css";
