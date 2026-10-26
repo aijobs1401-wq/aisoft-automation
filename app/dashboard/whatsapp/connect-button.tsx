@@ -13,6 +13,7 @@ declare global {
 }
 
 type SessionInfo = { wabaId: string; phoneNumberId: string };
+type OnboardingMode = "coexistence" | "api_only";
 
 export default function WhatsAppConnectButton({
   organizationId,
@@ -31,6 +32,7 @@ export default function WhatsAppConnectButton({
   const [message, setMessage] = useState("");
   const [code, setCode] = useState("");
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
+  const [onboardingMode, setOnboardingMode] = useState<OnboardingMode>("coexistence");
   const submitted = useRef(false);
 
   useEffect(() => {
@@ -94,7 +96,8 @@ export default function WhatsAppConnectButton({
         code,
         wabaId: sessionInfo.wabaId,
         phoneNumberId: sessionInfo.phoneNumberId,
-        organizationId
+        organizationId,
+        onboardingMode
       })
     })
       .then(async response => {
@@ -107,7 +110,7 @@ export default function WhatsAppConnectButton({
         setError(err instanceof Error ? err.message : "WhatsApp connection failed.");
       })
       .finally(() => setBusy(false));
-  }, [code, sessionInfo, organizationId]);
+  }, [code, sessionInfo, organizationId, onboardingMode]);
 
   function launchSignup() {
     setError("");
@@ -132,12 +135,25 @@ export default function WhatsAppConnectButton({
       auth_type: "rerequest",
       response_type: "code",
       override_default_response_type: true,
-      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding" }
+      extras: onboardingMode === "coexistence"
+        ? { setup: {}, featureType: "whatsapp_business_app_onboarding" }
+        : { setup: {} }
     });
   }
 
   return (
     <div className="auth-form">
+      <fieldset className="onboarding-choice" style={{ border: "1px solid var(--border, #26364d)", borderRadius: 12, padding: 16, margin: "0 0 16px" }}>
+        <legend style={{ padding: "0 8px", fontWeight: 700 }}>Choose number setup</legend>
+        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", margin: "8px 0", cursor: "pointer" }}>
+          <input type="radio" name="whatsapp-onboarding-mode" value="coexistence" checked={onboardingMode === "coexistence"} onChange={() => setOnboardingMode("coexistence")} />
+          <span><strong>Keep WhatsApp Business App (Coexistence)</strong><br /><span className="sub">Use an eligible existing Business App number while keeping the app available.</span></span>
+        </label>
+        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", margin: "8px 0", cursor: "pointer" }}>
+          <input type="radio" name="whatsapp-onboarding-mode" value="api_only" checked={onboardingMode === "api_only"} onChange={() => setOnboardingMode("api_only")} />
+          <span><strong>New / API-only number</strong><br /><span className="sub">Set up a number for the WhatsApp Business Platform without the coexistence flow.</span></span>
+        </label>
+      </fieldset>
       {!appId || !configId ? (
         <p className="form-message">Meta configuration is pending. Once the Meta App ID and Embedded Signup v4 Configuration ID are added, this button will launch the official Meta flow.</p>
       ) : null}
