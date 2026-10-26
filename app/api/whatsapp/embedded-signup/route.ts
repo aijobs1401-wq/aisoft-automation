@@ -49,9 +49,10 @@ export async function POST(request: Request) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
 
-  let body: { code?: string; wabaId?: string; phoneNumberId?: string; organizationId?: string };
+  let body: { code?: string; wabaId?: string; phoneNumberId?: string; organizationId?: string; onboardingMode?: "coexistence" | "api_only" };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
   const { code, wabaId, phoneNumberId, organizationId } = body;
+  const onboardingMode = body.onboardingMode;
   if (!code || !wabaId || !organizationId ||
       !/^[0-9]{5,40}$/.test(wabaId) || (phoneNumberId && !/^[0-9]{5,40}$/.test(phoneNumberId))) {
     return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA ID." }, { status: 400 });
@@ -78,17 +79,21 @@ export async function POST(request: Request) {
 
     const accessToken = tokenData.access_token;
     stage = "fetch_whatsapp_phone_details";
+    const phoneList = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, accessToken) as {
+      data?: Array<{ id?: string; display_phone_number?: string; verified_name?: string }>;
+    };
+    if (!phoneList.data?.length) {
+      return NextResponse.json({ error: "Meta finished onboarding but no phone number is available yet. Complete phone verification in Meta and retry signup." }, { status: 409 });
+    }
     let selectedPhoneNumberId = phoneNumberId;
     let phone: { display_phone_number?: string; verified_name?: string; id?: string };
     if (selectedPhoneNumberId) {
-      phone = await graphGet(selectedPhoneNumberId, accessToken) as { display_phone_number?: string; verified_name?: string; id?: string };
-    } else {
-      const phoneList = await graphGet(`${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`, accessToken) as {
-        data?: Array<{ id?: string; display_phone_number?: string; verified_name?: string }>;
-      };
-      if (!phoneList.data?.length) {
-        return NextResponse.json({ error: "Meta finished onboarding but no phone number is available yet. Complete phone verification in Meta and retry signup." }, { status: 409 });
+      const selectedPhone = phoneList.data.find(item => item.id === selectedPhoneNumberId);
+      if (!selectedPhone) {
+        return NextResponse.json({ error: "The selected phone number does not belong to the WhatsApp Business Account returned by Meta." }, { status: 400 });
       }
+      phone = selectedPhone;
+    } else {
       if (phoneList.data.length !== 1 || !phoneList.data[0].id) {
         return NextResponse.json({ error: "Meta returned multiple phone numbers. Please restart signup and select the intended number." }, { status: 409 });
       }
