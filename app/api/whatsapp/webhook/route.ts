@@ -131,6 +131,40 @@ export async function POST(request: Request) {
           // Generate one automatic reply only for a newly inserted, text-bearing inbound message.
           // AI failures must not cause Meta webhook retries or block inbox persistence.
           const inboundText = textBody(message);
+          // Forward newly received inbound messages to this workspace's configured, signed webhook.
+          if (!isAppEcho && insertedMessages?.length) {
+            try {
+              const { data: apiSettings } = await admin.from("organization_api_settings")
+                .select("webhook_url,webhook_secret")
+                .eq("organization_id", connection.organization_id).maybeSingle();
+              if (apiSettings?.webhook_url && apiSettings.webhook_secret) {
+                const eventBody = JSON.stringify({
+                  id: String(message.id),
+                  event: "whatsapp.message.inbound",
+                  organizationId: connection.organization_id,
+                  connectionId: connection.id,
+                  from: waId,
+                  message: { id: String(message.id), type: String(message.type ?? "unknown"), text: inboundText, timestamp: occurredAt },
+                  receivedAt: new Date().toISOString()
+                });
+                const signature = createHmac("sha256", apiSettings.webhook_secret).update(eventBody, "utf8").digest("hex");
+                await fetch(apiSettings.webhook_url, {
+                  method: "POST",
+                  headers: {
+                    "content-type": "application/json",
+                    "x-aisoft-event": "whatsapp.message.inbound",
+                    "x-aisoft-signature": "sha256=" + signature,
+                    "x-aisoft-delivery": String(message.id)
+                  },
+                  body: eventBody,
+                  cache: "no-store",
+                  signal: AbortSignal.timeout(5000)
+                });
+              }
+            } catch {
+              // Third-party webhook failures must not block WhatsApp inbox processing.
+            }
+          }
           const optOutRequested = !isAppEcho && Boolean(inboundText && /^(stop|stopall|unsubscribe|cancel|quit|end|remove)$/i.test(inboundText.trim()));
           if (optOutRequested) {
             await admin.from("contacts").update({ opted_out_at: new Date().toISOString() }).eq("id", contact.id);
