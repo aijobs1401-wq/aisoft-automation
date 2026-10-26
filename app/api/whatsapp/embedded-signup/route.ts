@@ -52,8 +52,8 @@ export async function POST(request: Request) {
   let body: { code?: string; wabaId?: string; phoneNumberId?: string; organizationId?: string; onboardingMode?: "coexistence" | "api_only" };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
   const { code, wabaId, phoneNumberId, organizationId } = body;
-  const onboardingMode = body.onboardingMode;
-  if (!code || !wabaId || !organizationId || !["coexistence", "api_only"].includes(String(onboardingMode)) ||
+  const onboardingMode = body.onboardingMode === "api_only" ? "api_only" : body.onboardingMode === "coexistence" ? "coexistence" : null;
+  if (!code || !wabaId || !organizationId || !onboardingMode ||
       !/^[0-9]{5,40}$/.test(wabaId) || (phoneNumberId && !/^[0-9]{5,40}$/.test(phoneNumberId))) {
     return NextResponse.json({ error: "The completed Meta signup did not return a valid WABA ID." }, { status: 400 });
   }
