@@ -60,7 +60,10 @@ export async function POST(request: Request) {
       cache: "no-store",
       signal: AbortSignal.timeout(20000)
     });
-    const result = await response.json() as { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string } };
+    const result = await response.json() as {
+      choices?: Array<{ message?: { content?: string } }>;
+      error?: { message?: string; type?: string; code?: string | number };
+    };
     if (!response.ok) {
       // Log diagnostic metadata only. Never log the API key or full request headers/body.
       console.error("[public-chat] OpenAI request failed", {
