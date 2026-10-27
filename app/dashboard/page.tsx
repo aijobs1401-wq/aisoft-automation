@@ -40,7 +40,7 @@ export default function DashboardPage() {
         if (!active) return;
         setEmail(user.email ?? "");
         setOrgs(memberships);
-        if (!org?.id) { window.location.replace("/workspace-setup"); return; }
+        if (!org?.id) { window.location.replace("/dashboard/workspace/new"); return; }
 
         const [conn, contacts, campaigns, messages] = await Promise.all([
           supabase.from("whatsapp_connections").select("id,organization_id,display_phone_number,verified_name,connection_status,onboarding_mode").eq("organization_id", org.id).order("created_at", { ascending: false }),
