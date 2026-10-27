@@ -82,6 +82,7 @@ export default function DashboardPage() {
         <Link className="ifx-nav-link" href="/dashboard/campaigns"><Megaphone size={18}/> Campaigns</Link>
         <Link className="ifx-nav-link" href="/dashboard/whatsapp"><ContactRound size={18}/> Contacts & numbers</Link>
         <Link className="ifx-nav-link" href="/dashboard/automation"><Bot size={18}/> Automation</Link>
+        <Link className="ifx-nav-link" href="/dashboard/website-bot"><Bot size={18}/> Website AI Bot</Link>
         <Link className="ifx-nav-link" href="/dashboard/integrations"><Webhook size={18}/> Integrations</Link>
         <Link className="ifx-nav-link" href="/dashboard/api"><Code2 size={18}/> API & Webhooks</Link>
       </nav>
