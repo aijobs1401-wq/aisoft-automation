@@ -62,12 +62,25 @@ export async function POST(request: Request) {
     });
     const result = await response.json() as { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string } };
     if (!response.ok) {
+      // Log diagnostic metadata only. Never log the API key or full request headers/body.
+      console.error("[public-chat] OpenAI request failed", {
+        status: response.status,
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        errorType: result.error?.type || "unknown",
+        errorCode: result.error?.code || "unknown",
+        errorMessage: (result.error?.message || "No provider error message").slice(0, 240),
+      });
       return NextResponse.json({ error: "The AI assistant is temporarily unavailable. Please try again shortly." }, { status: 502 });
     }
     const reply = result.choices?.[0]?.message?.content?.trim();
     if (!reply) return NextResponse.json({ error: "The assistant could not create a reply. Please try again." }, { status: 502 });
     return NextResponse.json({ reply: reply.slice(0, 3500) });
-  } catch {
+  } catch (error) {
+    // Keep diagnostic logs useful without exposing secrets to visitors.
+    const diagnostic = error instanceof Error
+      ? { name: error.name, message: error.message.slice(0, 240) }
+      : { name: "UnknownError", message: "Unknown error" };
+    console.error("[public-chat] OpenAI request threw", diagnostic);
     return NextResponse.json({ error: "The AI assistant could not be reached. Please try again shortly." }, { status: 502 });
   }
 }
