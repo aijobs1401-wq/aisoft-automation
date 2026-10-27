@@ -1,0 +1,25 @@
+(function () {
+  "use strict";
+  var script=document.currentScript;if(!script||script.dataset.loaded==="true")return;script.dataset.loaded="true";
+  var key=script.getAttribute("data-key")||"",api=(script.getAttribute("data-api-base")||"https://aisoft-automation.onrender.com").replace(/\/$/,"");
+  var title=script.getAttribute("data-title")||"Website Assistant",color=script.getAttribute("data-color")||"#176747",welcome=script.getAttribute("data-welcome")||"Hi! How can I help you today?";
+  if(!key.startsWith("gfw_pub_")){console.error("[AI SOFT STUDIO] Set a valid data-key.");return;}
+  var css=".gfw-launch{position:fixed;right:22px;bottom:22px;z-index:2147483000;border:0;border-radius:999px;background:"+color+";color:#fff;padding:14px 19px;font:600 14px system-ui;box-shadow:0 10px 35px #0003;cursor:pointer}.gfw-panel{position:fixed;right:22px;bottom:82px;width:min(360px,calc(100vw - 28px));height:min(510px,calc(100vh - 120px));z-index:2147483000;background:#fff;color:#17211b;border:1px solid #dfe8e1;border-radius:20px;box-shadow:0 18px 60px #0003;display:none;overflow:hidden;font:14px system-ui}.gfw-head{background:"+color+";color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;font-weight:700}.gfw-close{background:transparent;border:0;color:#fff;font-size:23px;cursor:pointer}.gfw-msgs{height:calc(100% - 126px);overflow:auto;padding:14px;background:#f7faf7;display:flex;flex-direction:column;gap:10px}.gfw-bubble{max-width:88%;padding:10px 12px;border-radius:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}.gfw-bot{align-self:flex-start;background:#fff;border:1px solid #e2e9e3}.gfw-user{align-self:flex-end;background:"+color+";color:#fff}.gfw-form{display:flex;gap:8px;padding:10px;border-top:1px solid #e5eae5}.gfw-input{min-width:0;flex:1;border:1px solid #d4ded5;border-radius:11px;padding:11px;font:14px system-ui}.gfw-send{border:0;border-radius:11px;background:"+color+";color:#fff;padding:0 14px;font-weight:700;cursor:pointer}.gfw-send:disabled{opacity:.55}.gfw-foot{font-size:10px;text-align:center;color:#768078;padding:0 8px 8px}.gfw-panel *{box-sizing:border-box}@media(max-width:480px){.gfw-launch{right:14px;bottom:14px}.gfw-panel{right:10px;bottom:72px}}";
+  var style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
+  var launch=document.createElement("button");launch.className="gfw-launch";launch.type="button";launch.textContent="Chat with us";
+  var panel=document.createElement("section");panel.className="gfw-panel";panel.setAttribute("aria-label",title);
+  var head=document.createElement("div");head.className="gfw-head";var heading=document.createElement("span");heading.textContent=title;
+  var close=document.createElement("button");close.className="gfw-close";close.type="button";close.setAttribute("aria-label","Close chat");close.textContent="×";head.append(heading,close);
+  var msgs=document.createElement("div");msgs.className="gfw-msgs";var form=document.createElement("form");form.className="gfw-form";
+  var input=document.createElement("input");input.className="gfw-input";input.maxLength=2000;input.autocomplete="off";input.placeholder="Type your message…";input.setAttribute("aria-label","Your message");
+  var send=document.createElement("button");send.className="gfw-send";send.type="submit";send.textContent="Send";form.append(input,send);
+  var foot=document.createElement("div");foot.className="gfw-foot";foot.textContent="AI assistant powered by AI SOFT STUDIO";panel.append(head,msgs,form,foot);document.body.append(launch,panel);
+  var history=[],busy=false;
+  function bubble(text,who){var el=document.createElement("div");el.className="gfw-bubble "+(who==="user"?"gfw-user":"gfw-bot");el.textContent=text;msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;}
+  bubble(welcome,"assistant");launch.addEventListener("click",function(){panel.style.display="block";launch.style.display="none";input.focus()});close.addEventListener("click",function(){panel.style.display="none";launch.style.display="block"});
+  form.addEventListener("submit",async function(event){event.preventDefault();var text=input.value.trim();if(!text||busy)return;input.value="";history.push({role:"user",content:text});bubble(text,"user");busy=true;send.disabled=true;send.textContent="…";
+    try{var response=await fetch(api+"/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json","X-Widget-Key":key},body:JSON.stringify({messages:history.slice(-12)})});var data=await response.json();if(!response.ok)throw new Error(data.error||"Chat request failed");var answer=String(data.reply||"Sorry, I could not reply.");history.push({role:"assistant",content:answer});bubble(answer,"assistant")}
+    catch(error){bubble(error&&error.message?error.message:"Assistant unavailable. Please try again.","assistant")}
+    finally{busy=false;send.disabled=false;send.textContent="Send";input.focus()}
+  });
+})();
