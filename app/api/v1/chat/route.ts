@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 const reply = (data: unknown, status=200, origin?: string) => NextResponse.json(data,{status,headers:{"Cache-Control":"no-store","Vary":"Origin",...(origin?{"Access-Control-Allow-Origin":origin}:{})}});
 function db(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL;const key=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!url||!key)throw new Error("Server database configuration missing");return createAdmin(url,key,{auth:{autoRefreshToken:false,persistSession:false}});}
 function originAllowed(origin:string, list:string[]){try{const actual=new URL(origin).origin;return list.some(item=>{try{return new URL(item).origin===actual}catch{return false}})}catch{return false}}
+export async function OPTIONS(){return new Response(null,{status:204,headers:{"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"POST, OPTIONS","Access-Control-Allow-Headers":"Content-Type, X-Widget-Key","Access-Control-Max-Age":"600","Vary":"Origin"}})}
 export async function POST(request:Request){
  const origin=request.headers.get("origin")||"";
  const key=request.headers.get("x-widget-key")||"";
